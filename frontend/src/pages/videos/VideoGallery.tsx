@@ -8,6 +8,7 @@ import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { videoApi, commentApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 import { Danmaku } from '@/components/Danmaku'
 
 interface VideoItem {
@@ -31,6 +32,7 @@ export default function VideoGallery() {
   const [uploading, setUploading] = useState(false)
   const [title, setTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const toast = useToastStore((s) => s.toast)
 
   // Player state
   const [playerOpen, setPlayerOpen] = useState(false)
@@ -100,7 +102,7 @@ export default function VideoGallery() {
       const { data } = await videoApi.findAll(1)
       setVideos(data.items || [])
     } catch (e: any) {
-      alert(e?.response?.data?.message || e?.message || '上传失败')
+      toast(e?.response?.data?.message || e?.message || '上传失败', 'error')
     } finally {
       setUploading(false)
     }

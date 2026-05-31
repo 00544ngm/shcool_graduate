@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { PageMeta } from '@/components/PageMeta'
 import { homeMessageApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 /* ─── Graduation Countdown ─── */
 function getCountdown() {
@@ -113,6 +114,7 @@ interface MsgItem {
 
 function MessageWall() {
   const { user } = useAuthStore()
+  const toast = useToastStore((s) => s.toast)
   const [messages, setMessages] = useState<MsgItem[]>([])
   const [input, setInput] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -133,7 +135,9 @@ function MessageWall() {
       const { data } = await homeMessageApi.create(input.trim())
       setMessages((prev) => [data, ...prev])
       setInput('')
-    } catch {} finally {
+    } catch (e: any) {
+      toast(e?.response?.data?.message || e?.message || '发送失败', 'error')
+    } finally {
       setSubmitting(false)
     }
   }
@@ -142,7 +146,9 @@ function MessageWall() {
     try {
       await homeMessageApi.delete(id)
       setMessages((prev) => prev.filter((m) => m.id !== id))
-    } catch {}
+    } catch (e: any) {
+      toast(e?.response?.data?.message || e?.message || '删除失败', 'error')
+    }
   }
 
   return (

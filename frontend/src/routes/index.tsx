@@ -20,6 +20,7 @@ const Moments = lazy(() => import('@/pages/moments'))
 const AIAssistant = lazy(() => import('@/pages/ai'))
 const Notifications = lazy(() => import('@/pages/notifications'))
 const Settings = lazy(() => import('@/pages/settings'))
+const Admin = lazy(() => import('@/pages/admin'))
 
 function PageLoader() {
   return (
@@ -58,6 +59,7 @@ export const routes = createRoutesFromElements(
       <Route path="/settings" element={<Lazy><Settings /></Lazy>} />
       <Route path="/ai" element={<Lazy><AIAssistant /></Lazy>} />
       <Route path="/notifications" element={<Lazy><Notifications /></Lazy>} />
+      <Route path="/admin" element={<Lazy><Admin /></Lazy>} />
     </Route>
   </Route>,
 )

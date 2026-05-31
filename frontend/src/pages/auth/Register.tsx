@@ -25,8 +25,12 @@ export default function Register() {
       setError('请填写所有必填项')
       return
     }
-    if (form.password.length < 6) {
-      setError('密码至少需要6个字符')
+    if (form.password.length < 8) {
+      setError('密码至少需要8个字符')
+      return
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
+      setError('密码必须包含大小写字母和数字')
       return
     }
     if (form.password !== form.confirmPassword) {
@@ -95,7 +99,7 @@ export default function Register() {
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
                   onChange={update('password')}
-                  placeholder="至少6个字符"
+                  placeholder="至少8位，含大小写字母和数字"
                   disabled={loading}
                   className="pr-10"
                 />

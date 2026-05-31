@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { PageMeta } from '@/components/PageMeta'
 import { momentApi, likeApi, commentApi, uploadApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 interface Moment {
   id: string
@@ -19,8 +20,17 @@ interface Moment {
   _count?: { likes: number; comments: number }
 }
 
+interface CommentItem {
+  id: string
+  content: string
+  createdAt: string
+  user?: { id: string; nickname?: string; username?: string; avatar?: string }
+  replies?: CommentItem[]
+}
+
 export default function Moments() {
   const { user } = useAuthStore()
+  const toast = useToastStore((s) => s.toast)
   const [moments, setMoments] = useState<Moment[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -36,7 +46,7 @@ export default function Moments() {
 
   /* ─── Comment Dialog ─── */
   const [commentTarget, setCommentTarget] = useState<string | null>(null)
-  const [comments, setComments] = useState<Record<string, any[]>>({})
+  const [comments, setComments] = useState<Record<string, CommentItem[]>>({})
   const [commentsLoading, setCommentsLoading] = useState(false)
   const [commentInput, setCommentInput] = useState('')
   const [commentSubmitting, setCommentSubmitting] = useState(false)
@@ -99,7 +109,7 @@ export default function Moments() {
       const { data } = await momentApi.findAll(1)
       setMoments(data.items || [])
     } catch (e: any) {
-      alert(e?.response?.data?.message || e?.message || '发布失败')
+      toast(e?.response?.data?.message || e?.message || '发布失败', 'error')
     } finally {
       setSubmitting(false)
     }
@@ -123,7 +133,7 @@ export default function Moments() {
         ),
       )
     } catch (e: any) {
-      alert(e?.response?.data?.message || e?.message || '操作失败')
+      toast(e?.response?.data?.message || e?.message || '操作失败', 'error')
     }
   }
 
@@ -322,7 +332,7 @@ export default function Moments() {
             {commentTarget && (comments[commentTarget]?.length ?? 0) === 0 ? (
               <p className="py-4 text-center text-sm text-text-muted">还没有评论</p>
             ) : (
-              commentTarget && comments[commentTarget]?.map((c: any) => (
+              commentTarget && comments[commentTarget]?.map((c: CommentItem) => (
                 <div key={c.id} className="flex gap-2 rounded-lg bg-bg-elevated/50 p-3">
                   <span className="shrink-0 text-sm font-medium text-text-primary">
                     {c.user?.nickname || c.user?.username}

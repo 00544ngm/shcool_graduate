@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { LogOut, Bell, Menu, X, Home, Image, Video, Clock, MapPin, Users, Mail, MessageCircle, Sparkles, Building, Settings } from 'lucide-react'
 import { Starfield } from '@/components/Starfield'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ToastContainer } from '@/components/ToastContainer'
 import { useState } from 'react'
 
 const navItems = [
@@ -68,6 +69,13 @@ export default function MainLayout() {
                   </Button>
                 </Link>
                 <div className="hidden items-center gap-1 md:flex">
+                  {user.role === 'ADMIN' && (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="icon">
+                        <Shield className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  )}
                   <Link to="/settings">
                     <Button variant="ghost" size="icon">
                       <Settings className="h-4 w-4" />
@@ -118,6 +126,16 @@ export default function MainLayout() {
                 <Settings className="h-5 w-5" />
                 个人设置
               </Link>
+              {user.role === 'ADMIN' && (
+                <Link
+                  to="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-text-secondary hover:bg-bg-elevated"
+                >
+                  <Shield className="h-5 w-5" />
+                  后台管理
+                </Link>
+              )}
               <button
                 onClick={() => { handleLogout(); setMenuOpen(false) }}
                 className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm text-error"
@@ -142,6 +160,8 @@ export default function MainLayout() {
       <footer className="border-t border-border py-8 text-center text-sm text-text-muted">
         <p>Class Memories &copy; {new Date().getFullYear()} — 班级时光馆，珍藏每一刻</p>
       </footer>
+
+      <ToastContainer />
     </div>
   )
 }

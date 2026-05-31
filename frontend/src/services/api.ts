@@ -124,7 +124,10 @@ export const favoriteApi = {
 
 /* ─── Admin ─── */
 export const adminApi = {
+  stats: () => api.get('/admin/stats'),
+  users: () => api.get('/admin/users'),
   deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
+  updateRole: (id: string, role: string) => api.patch(`/admin/users/${id}/role`, { role }),
 }
 
 /* ─── Health ─── */

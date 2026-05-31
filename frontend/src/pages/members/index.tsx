@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { userApi, adminApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 interface Member {
   id: string
@@ -23,6 +24,7 @@ interface Member {
 
 export default function Members() {
   const { user } = useAuthStore()
+  const toast = useToastStore((s) => s.toast)
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -39,7 +41,9 @@ export default function Members() {
     try {
       await adminApi.deleteUser(id)
       setMembers((prev) => prev.filter((m) => m.id !== id))
-    } catch {}
+    } catch (e: any) {
+      toast(e?.response?.data?.message || e?.message || '删除失败', 'error')
+    }
   }
 
   const filtered = search
