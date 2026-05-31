@@ -18,7 +18,6 @@ export class CreatePhotoDto {
   location?: string;
 
   @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  tags?: string[];
+  @IsString()
+  tags?: string;
 }

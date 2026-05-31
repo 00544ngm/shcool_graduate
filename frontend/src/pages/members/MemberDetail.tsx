@@ -28,13 +28,11 @@ export default function MemberDetail() {
 
   useEffect(() => {
     if (!id) return
-    // The API only returns the current user's profile; for other users show a placeholder
-    userApi.getProfile()
+    userApi.getUserById(id)
       .then(({ data }) => {
-        if (data.id === id) {
+        if (data) {
           setProfile(data)
         } else {
-          // Other users' profiles not available via current API
           setError('该同学尚未完善个人资料')
         }
       })

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { videoApi } from '@/services/api'
+import { videoApi, commentApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { Danmaku } from '@/components/Danmaku'
 
@@ -18,17 +18,6 @@ interface VideoItem {
   user?: { id: string; nickname?: string; username: string }
   _count?: { likes: number; comments: number }
 }
-
-const MOCK_COMMENTS = [
-  { id: 'd1', content: '青春不散场 🎓', createdAt: '' },
-  { id: 'd2', content: '永远的同学！', createdAt: '' },
-  { id: 'd3', content: '好怀念啊 😭', createdAt: '' },
-  { id: 'd4', content: '太棒了！🔥', createdAt: '' },
-  { id: 'd5', content: '时光不老，我们不散', createdAt: '' },
-  { id: 'd6', content: '毕业快乐！🎉', createdAt: '' },
-  { id: 'd7', content: '加油未来 💪', createdAt: '' },
-  { id: 'd8', content: '这一届最棒 🌟', createdAt: '' },
-]
 
 export default function VideoGallery() {
   const { user } = useAuthStore()
@@ -50,6 +39,8 @@ export default function VideoGallery() {
   const [duration, setDuration] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [danmakuEnabled, setDanmakuEnabled] = useState(true)
+  const [danmakuComments, setDanmakuComments] = useState<{ id: string; content: string; createdAt: string }[]>([])
+  const [danmakuInput, setDanmakuInput] = useState('')
 
   const loaderRef = useRef<HTMLDivElement>(null)
 
@@ -99,7 +90,7 @@ export default function VideoGallery() {
     setUploading(true)
     try {
       const fd = new FormData()
-      fd.append('video', file)
+      fd.append('file', file)
       fd.append('title', title)
       await videoApi.create(fd)
       setUploadOpen(false)
@@ -118,16 +109,29 @@ export default function VideoGallery() {
     setCurrentTime(0)
     setDuration(0)
     setPlaying(true)
+    commentApi.findByTarget('video', video.id)
+      .then(({ data }) => setDanmakuComments(data || []))
+      .catch(() => setDanmakuComments([]))
   }
 
   const closePlayer = () => {
     setPlayerOpen(false)
     setPlaying(false)
     setPlayerVideo(null)
+    setDanmakuComments([])
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
     }
+  }
+
+  const sendDanmaku = async () => {
+    if (!danmakuInput.trim() || !playerVideo || !user) return
+    try {
+      const { data } = await commentApi.create({ targetType: 'video', targetId: playerVideo.id, content: danmakuInput })
+      setDanmakuComments((prev) => [...prev, data])
+      setDanmakuInput('')
+    } catch {}
   }
 
   const handleTimeUpdate = () => {
@@ -249,7 +253,7 @@ export default function VideoGallery() {
                 <Danmaku
                   duration={duration || 100}
                   currentTime={currentTime}
-                  comments={MOCK_COMMENTS}
+                  comments={danmakuComments}
                   playing={playing}
                 />
               )}
@@ -269,6 +273,26 @@ export default function VideoGallery() {
                 {danmakuEnabled ? '弹幕 ON' : '弹幕 OFF'}
               </button>
             </div>
+
+            {/* Danmaku Input */}
+            {user && danmakuEnabled && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  value={danmakuInput}
+                  onChange={(e) => setDanmakuInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') sendDanmaku() }}
+                  placeholder="发个弹幕..."
+                  className="flex-1 rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white placeholder-white/40 outline-none focus:ring-1 focus:ring-accent"
+                />
+                <button
+                  onClick={sendDanmaku}
+                  disabled={!danmakuInput.trim()}
+                  className="rounded-lg bg-accent px-3 py-1.5 text-xs text-white disabled:opacity-40"
+                >
+                  发送
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

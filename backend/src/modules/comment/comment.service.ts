@@ -36,8 +36,8 @@ export class CommentService {
     ]);
 
     if (owner && owner.userId !== userId) {
-      const label = targetType === 'photo' ? 'photo' : targetType === 'video' ? 'video' : 'moment';
-      await this.notificationService.create(owner.userId, 'comment', `Someone commented on your ${label}`, dto.targetId);
+      const label = targetType === 'photo' ? '照片' : targetType === 'video' ? '视频' : '动态';
+      await this.notificationService.create(owner.userId, 'comment', `有人评论了你的${label}`, dto.targetId);
     }
 
     return comment;

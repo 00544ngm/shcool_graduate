@@ -19,3 +19,6 @@ frontend/dist/
 
 # Memory / Claude
 .claude/
+
+# Secrets
+apikey.txt

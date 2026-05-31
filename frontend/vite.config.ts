@@ -17,4 +17,16 @@ export default defineConfig({
       '/uploads': 'http://localhost:3000',
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules/three') || id.includes('node_modules/@react-three')) {
+            return 'three-vendor';
+          }
+        },
+      },
+    },
+  },
 })

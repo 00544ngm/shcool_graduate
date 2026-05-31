@@ -91,10 +91,13 @@ export const notificationApi = {
 
 /* ─── User ─── */
 export const userApi = {
+  findAll: (page = 1, limit = 20) => api.get('/user', { params: { page, limit } }),
   getProfile: () => api.get('/user/profile'),
+  getUserById: (id: string) => api.get(`/user/${id}`),
   updateProfile: (data: { nickname?: string; bio?: string; city?: string; dormitory?: string }) =>
     api.put('/user/profile', data),
   getCityMap: () => api.get('/user/map'),
+  getDormitoryGroups: () => api.get('/user/dormitory-groups'),
 }
 
 /* ─── Mailbox ─── */
@@ -106,7 +109,27 @@ export const mailboxApi = {
   openLetter: (id: string) => api.post(`/mailbox/${id}/open`),
 }
 
+/* ─── AI ─── */
+export const aiApi = {
+  search: (query: string) => api.post('/ai/search', { query }),
+}
+
+/* ─── Favorite ─── */
+export const favoriteApi = {
+  toggle: (data: { targetType: string; targetId: string }) => api.post('/favorites/toggle', data),
+  findMy: () => api.get('/favorites'),
+}
+
 /* ─── Health ─── */
 export const healthApi = {
   check: () => api.get('/health'),
+}
+
+/* ─── Upload ─── */
+export const uploadApi = {
+  images: (files: File[]) => {
+    const fd = new FormData()
+    files.forEach((f) => fd.append('files', f))
+    return api.post('/upload', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  },
 }

@@ -21,7 +21,7 @@ export class PhotoService {
         description: dto.description,
         takenAt: dto.takenAt ? new Date(dto.takenAt) : null,
         location: dto.location,
-        tags: dto.tags || [],
+        tags: dto.tags ? dto.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
       },
     });
   }

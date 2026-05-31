@@ -57,9 +57,9 @@ export default function PhotoDetail() {
   const handleLike = async () => {
     if (!user || !id) return
     try {
-      await likeApi.toggle({ targetType: 'photo', targetId: id })
-      setLiked(!liked)
-      setLikeCount((c) => (liked ? c - 1 : c + 1))
+      const { data } = await likeApi.toggle({ targetType: 'photo', targetId: id })
+      setLiked(data.liked)
+      setLikeCount(data.count)
     } catch { console.error('Like failed') }
   }
 
@@ -184,6 +184,15 @@ export default function PhotoDetail() {
               <span className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5" />
                 {photo.location}
+              </span>
+            )}
+            {photo.tags?.length > 0 && (
+              <span className="flex items-center gap-1.5">
+                {photo.tags.map((tag: string) => (
+                  <span key={tag} className="rounded-full bg-bg-elevated px-2 py-0.5 text-xs text-text-muted">
+                    #{tag}
+                  </span>
+                ))}
               </span>
             )}
           </div>

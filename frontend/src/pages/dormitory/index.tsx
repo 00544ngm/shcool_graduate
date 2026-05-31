@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Home, Users, Image, MessageCircle, MapPin } from 'lucide-react'
+import { Home, Users, Image, MessageCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -23,22 +24,8 @@ export default function Dormitory() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Use city data as proxy; in production, a dedicated dormitory API would exist
-    userApi.getCityMap()
-      .then(({ data }) => {
-        const raw = data.distribution || {}
-        const dormGroups = Object.entries(raw).map(([city, info]: any) => ({
-          name: `${city}宿舍`,
-          count: info.count,
-          members: (info.names || []).map((name: string, i: number) => ({
-            id: `${city}-${i}`,
-            nickname: name,
-            username: name,
-            bio: `来自 ${city}`,
-          })),
-        }))
-        setGroups(dormGroups)
-      })
+    userApi.getDormitoryGroups()
+      .then(({ data }) => setGroups(data || []))
       .catch(() => setGroups([]))
       .finally(() => setLoading(false))
   }, [])
@@ -115,12 +102,12 @@ export default function Dormitory() {
 
               {/* Actions */}
               <div className="flex border-t border-border divide-x divide-border">
-                <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs text-text-muted hover:text-accent transition-colors">
+                <Link to="/photos" className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs text-text-muted hover:text-accent transition-colors">
                   <Image className="h-3.5 w-3.5" />相册
-                </button>
-                <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs text-text-muted hover:text-accent transition-colors">
+                </Link>
+                <Link to="/moments" className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs text-text-muted hover:text-accent transition-colors">
                   <MessageCircle className="h-3.5 w-3.5" />留言
-                </button>
+                </Link>
               </div>
             </motion.div>
           ))}

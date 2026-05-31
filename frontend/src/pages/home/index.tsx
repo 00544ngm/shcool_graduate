@@ -100,7 +100,29 @@ function Stars() {
   )
 }
 
-/* ─── Floating Memory Cards ─── */
+/* ─── Scrolling Message Bar ─── */
+const scrollMessages = [
+  '📸 上传了新照片 — 时光定格，青春不散',
+  '🎬 发布了新视频 — 每一帧都是故事',
+  '💬 发表了新动态 — 分享此刻心情',
+  '🎓 距离毕业越来越近，珍惜每一天',
+  '🌟 班级时光馆，珍藏我们的回忆',
+]
+
+function ScrollingBar() {
+  return (
+    <div className="mt-8 overflow-hidden rounded-lg border border-accent/10 bg-accent/5 px-4 py-2.5 backdrop-blur-sm">
+      <div className="flex animate-marquee gap-8 whitespace-nowrap">
+        {[...scrollMessages, ...scrollMessages].map((msg, idx) => (
+          <span key={idx} className="flex items-center gap-2 text-xs text-accent/80">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/60" />
+            {msg}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
 const memoryCards = [
   { icon: Image, label: '星空照片墙', desc: '浏览班级照片', color: 'from-amber-500/20 to-amber-600/10', path: '/photos' },
   { icon: Video, label: '视频记忆馆', desc: '重温珍贵影像', color: 'from-purple-500/20 to-purple-600/10', path: '/videos' },
@@ -244,6 +266,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
+            className="flex items-center justify-center gap-4"
           >
             <Link to="/photos">
               <Button size="lg" className="px-8 text-base animate-glow">
@@ -252,8 +275,17 @@ export default function Home() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
+            <Link to="/members">
+              <Button size="lg" variant="outline" className="px-8 text-base border-accent/30 text-accent hover:bg-accent/10">
+                <Users className="mr-2 h-5 w-5" />
+                关于我们
+              </Button>
+            </Link>
           </motion.div>
         </motion.div>
+
+        {/* Scrolling Message Bar */}
+        <ScrollingBar />
 
         {/* Floating Cards */}
         <FloatingCards />

@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Heart, Plus, Image } from 'lucide-react'
+import { MessageCircle, Heart, Plus, Image, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar } from '@/components/ui/avatar'
 import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { momentApi, likeApi } from '@/services/api'
+import { momentApi, likeApi, uploadApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 interface Moment {
@@ -28,6 +28,8 @@ export default function Moments() {
   const [writeOpen, setWriteOpen] = useState(false)
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set())
   const loaderRef = useRef<HTMLDivElement>(null)
 
@@ -76,8 +78,15 @@ export default function Moments() {
     if (!content.trim()) return
     setSubmitting(true)
     try {
-      await momentApi.create({ content })
+      let images: string[] | undefined
+      if (imageFiles.length > 0) {
+        const { data } = await uploadApi.images(imageFiles)
+        images = data.urls
+      }
+      await momentApi.create({ content, images })
       setContent('')
+      setImageFiles([])
+      setImagePreviews([])
       setWriteOpen(false)
       const { data } = await momentApi.findAll(1)
       setMoments(data.items || [])
@@ -89,17 +98,17 @@ export default function Moments() {
   const handleLike = async (momentId: string) => {
     if (!user) return
     try {
-      await likeApi.toggle({ targetType: 'moment', targetId: momentId })
+      const { data } = await likeApi.toggle({ targetType: 'moment', targetId: momentId })
       setLikedSet((prev) => {
         const next = new Set(prev)
-        if (next.has(momentId)) next.delete(momentId)
-        else next.add(momentId)
+        if (data.liked) next.add(momentId)
+        else next.delete(momentId)
         return next
       })
       setMoments((prev) =>
         prev.map((m) =>
           m.id === momentId
-            ? { ...m, _count: { ...m._count, likes: (m._count?.likes ?? 0) + (likedSet.has(momentId) ? -1 : 1) } as any }
+            ? { ...m, _count: { ...m._count, likes: data.count } as any }
             : m,
         ),
       )
@@ -198,7 +207,7 @@ export default function Moments() {
         </div>
       )}
 
-      <Dialog open={writeOpen} onClose={() => setWriteOpen(false)}>
+      <Dialog open={writeOpen} onClose={() => { setWriteOpen(false); setImageFiles([]); setImagePreviews([]) }}>
         <DialogTitle>发表动态</DialogTitle>
         <div className="space-y-4">
           <Textarea
@@ -207,6 +216,50 @@ export default function Moments() {
             placeholder="分享此刻的心情..."
             rows={4}
           />
+          {imagePreviews.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {imagePreviews.map((url, idx) => (
+                <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                  <img src={url} alt="" className="h-full w-full object-cover" />
+                  <button
+                    onClick={() => {
+                      setImageFiles((prev) => prev.filter((_, i) => i !== idx))
+                      setImagePreviews((prev) => prev.filter((_, i) => i !== idx))
+                    }}
+                    className="absolute top-1 right-1 rounded-full bg-black/50 p-0.5 text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-text-muted hover:text-accent transition-colors">
+              <Image className="h-4 w-4" />
+              <span>添加图片</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || [])
+                  if (files.length === 0) return
+                  setImageFiles((prev) => [...prev, ...files])
+                  files.forEach((f) => {
+                    const reader = new FileReader()
+                    reader.onload = (ev) => {
+                      if (ev.target?.result) setImagePreviews((prev) => [...prev, ev.target!.result as string])
+                    }
+                    reader.readAsDataURL(f)
+                  })
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            <span className="text-xs text-text-muted">最多 9 张</span>
+          </div>
           <Button onClick={handlePost} className="w-full" disabled={!content.trim() || submitting}>
             {submitting ? '发布中...' : '发布'}
           </Button>

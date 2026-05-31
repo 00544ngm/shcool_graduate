@@ -1,18 +1,25 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Send, Image, Loader2 } from 'lucide-react'
+import { Sparkles, Send, Image, MessageCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
-import { photoApi } from '@/services/api'
+import { aiApi } from '@/services/api'
+
+interface AiPhoto {
+  id: string; title?: string; imageUrl: string; thumbnailUrl?: string
+}
+
+interface AiMoment {
+  id: string; content: string; user?: { nickname?: string }
+}
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
   results?: {
-    photos?: Array<{ id: string; title: string; imageUrl: string }>
-    videos?: Array<{ id: string; title: string; coverUrl?: string }>
-    moments?: Array<{ id: string; content: string }>
+    photos?: AiPhoto[]
+    moments?: AiMoment[]
   }
 }
 
@@ -45,16 +52,21 @@ export default function AIAssistant() {
     setQuery('')
 
     try {
-      const { data } = await photoApi.search(searchQuery, 1, 6)
+      const { data } = await aiApi.search(searchQuery)
 
       const assistantMsg: Message = {
         role: 'assistant',
-        content: `关于「${searchQuery}」的回忆，我找到了以下内容：`,
+        content: data.summary || `关于「${searchQuery}」的回忆：`,
         results: {
-          photos: (data.items || []).map((p: any) => ({
+          photos: (data.photos || []).map((p: any) => ({
             id: p.id,
             title: p.title,
             imageUrl: p.thumbnailUrl || p.imageUrl,
+          })),
+          moments: (data.moments || []).map((m: any) => ({
+            id: m.id,
+            content: m.content,
+            user: m.user,
           })),
         },
       }
@@ -105,7 +117,7 @@ export default function AIAssistant() {
                 <p className="whitespace-pre-wrap">{msg.content}</p>
               </div>
 
-              {/* Results */}
+              {/* Results — Photos */}
               {msg.results?.photos && msg.results.photos.length > 0 && (
                 <div className="mt-3">
                   <p className="mb-2 flex items-center gap-1.5 text-xs text-text-muted">
@@ -130,9 +142,24 @@ export default function AIAssistant() {
                       </a>
                     ))}
                   </div>
-                  <a href={`/photos?q=${encodeURIComponent(messages[idx - 1]?.content || '')}`} className="mt-2 inline-block text-xs text-accent hover:text-accent-hover">
-                    查看全部 →
-                  </a>
+                </div>
+              )}
+              {/* Results — Moments */}
+              {msg.results?.moments && msg.results.moments.length > 0 && (
+                <div className="mt-3">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs text-text-muted">
+                    <MessageCircle className="h-3.5 w-3.5" />相关动态
+                  </p>
+                  <div className="space-y-2">
+                    {msg.results.moments.map((moment) => (
+                      <div key={moment.id} className="rounded-lg border border-border bg-bg-elevated/50 p-2.5 text-xs text-text-secondary">
+                        <p className="line-clamp-2">{moment.content}</p>
+                        {moment.user?.nickname && (
+                          <p className="mt-1 text-text-muted">— {moment.user.nickname}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

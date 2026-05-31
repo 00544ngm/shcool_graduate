@@ -20,6 +20,7 @@ interface Photo {
   thumbnailUrl?: string
   takenAt?: string
   location?: string
+  tags?: string[]
   user?: { id: string; nickname?: string; username: string; avatar?: string }
   _count?: { likes: number; comments: number }
 }
@@ -38,18 +39,34 @@ export default function PhotoWall() {
   const [search, setSearch] = useState('')
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
   const [locationFilter, setLocationFilter] = useState<string>('')
+  const [tagFilter, setTagFilter] = useState<string>('')
+  const [yearFilter, setYearFilter] = useState<string>('')
   const [uploadOpen, setUploadOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [uploadForm, setUploadForm] = useState({ title: '', description: '', takenAt: '', location: '' })
+  const [uploadForm, setUploadForm] = useState({ title: '', description: '', takenAt: '', location: '', tags: '' })
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string>('')
   const loaderRef = useRef<HTMLDivElement>(null)
 
-  /* ─── All unique locations for filtering ─── */
+  /* ─── All unique tags / locations / years for filtering ─── */
+  const allTags = useMemo(() => {
+    const t = new Set<string>()
+    photos.forEach((p) => p.tags?.forEach((tag) => t.add(tag)))
+    return Array.from(t).sort()
+  }, [photos])
+
   const allLocations = useMemo(() => {
     const locs = new Set<string>()
     photos.forEach((p) => { if (p.location) locs.add(p.location) })
     return Array.from(locs).sort()
+  }, [photos])
+
+  const allYears = useMemo(() => {
+    const yrs = new Set<string>()
+    photos.forEach((p) => {
+      if (p.takenAt) yrs.add(new Date(p.takenAt).getFullYear().toString())
+    })
+    return Array.from(yrs).sort().reverse()
   }, [photos])
 
   /* ─── Fetch ─── */
@@ -102,15 +119,10 @@ export default function PhotoWall() {
   /* ─── Sort & Filter ─── */
   const displayedPhotos = useMemo(() => {
     let items = [...photos]
-    // Filter by location
-    if (locationFilter) {
-      items = items.filter((p) => p.location === locationFilter)
-    }
-    // Filter by favorites
-    if (showFavoritesOnly) {
-      items = items.filter((p) => isFavorite(p.id))
-    }
-    // Sort by date
+    if (tagFilter) items = items.filter((p) => p.tags?.includes(tagFilter))
+    if (locationFilter) items = items.filter((p) => p.location === locationFilter)
+    if (yearFilter) items = items.filter((p) => p.takenAt && new Date(p.takenAt).getFullYear().toString() === yearFilter)
+    if (showFavoritesOnly) items = items.filter((p) => isFavorite(p.id))
     items.sort((a, b) => {
       const da = a.takenAt || a.id
       const db = b.takenAt || b.id
@@ -119,7 +131,7 @@ export default function PhotoWall() {
         : new Date(da).getTime() - new Date(db).getTime()
     })
     return items
-  }, [photos, locationFilter, sortOrder])
+  }, [photos, tagFilter, locationFilter, yearFilter, sortOrder, showFavoritesOnly, isFavorite])
 
   /* ─── Upload ─── */
   const handleUpload = async () => {
@@ -127,11 +139,12 @@ export default function PhotoWall() {
     setUploading(true)
     try {
       const formData = new FormData()
-      formData.append('image', file)
+      formData.append('file', file)
       formData.append('title', uploadForm.title)
       if (uploadForm.description) formData.append('description', uploadForm.description)
       if (uploadForm.takenAt) formData.append('takenAt', uploadForm.takenAt)
       if (uploadForm.location) formData.append('location', uploadForm.location)
+      if (uploadForm.tags) formData.append('tags', uploadForm.tags)
       await photoApi.create(formData)
       setUploadOpen(false)
       setUploadForm({ title: '', description: '', takenAt: '', location: '' })
@@ -154,8 +167,9 @@ export default function PhotoWall() {
   }
 
   return (
-    <div className="px-4 py-6 relative z-10">
+    <>
       <Starfield />
+      <div className="px-4 py-6 relative z-10">
       {/* Header */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -205,6 +219,47 @@ export default function PhotoWall() {
           </Button>
         )}
       </div>
+
+      {/* Tags bar */}
+      {allTags.length > 0 && (
+        <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            onClick={() => setTagFilter('')}
+            className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+              !tagFilter ? 'bg-accent text-white' : 'bg-bg-elevated text-text-muted hover:text-text-primary'
+            }`}
+          >
+            全部
+          </button>
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setTagFilter(tag === tagFilter ? '' : tag)}
+              className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+                tagFilter === tag ? 'bg-accent text-white' : 'bg-bg-elevated text-text-muted hover:text-text-primary'
+              }`}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Year filter + Location tags */}
+      {allYears.length > 0 && (
+        <div className="mb-2 flex items-center gap-2">
+          <select
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+            className="rounded-lg border border-border bg-bg-elevated px-3 py-1 text-xs text-text-primary outline-none"
+          >
+            <option value="">全部时间</option>
+            {allYears.map((y) => (
+              <option key={y} value={y}>{y} 年</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Location tags */}
       {allLocations.length > 0 && (
@@ -331,11 +386,13 @@ export default function PhotoWall() {
               <Input value={uploadForm.location} onChange={(e) => setUploadForm((f) => ({ ...f, location: e.target.value }))} placeholder="如：教室" />
             </div>
           </div>
+          <Input value={uploadForm.tags || ''} onChange={(e) => setUploadForm((f) => ({ ...f, tags: e.target.value }))} placeholder="标签（逗号分隔，如：军训,运动会）" />
           <Button onClick={handleUpload} className="w-full" disabled={!file || !uploadForm.title.trim() || uploading}>
             {uploading ? '上传中...' : '上传'}
           </Button>
         </div>
       </Dialog>
     </div>
+    </>
   )
 }

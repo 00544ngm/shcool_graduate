@@ -25,13 +25,8 @@ export default function Members() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
-    // Try to get members list; fallback to empty
-    userApi.getCityMap()
-      .then(() => {
-        // Use the profile endpoint as proxy since there's no members list API
-        // For now show empty state with info
-        setMembers([])
-      })
+    userApi.findAll(1, 100)
+      .then(({ data }) => setMembers(data.items || []))
       .catch(() => setMembers([]))
       .finally(() => setLoading(false))
   }, [])
@@ -70,7 +65,7 @@ export default function Members() {
       ) : members.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-text-muted">
           <Users className="mb-3 h-12 w-12" />
-          <p className="mb-1">同学列表功能即将上线</p>
+          <p className="mb-1">还没有同学入驻</p>
           <p className="text-xs">每位同学完善个人资料后，将在这里展示</p>
         </div>
       ) : (

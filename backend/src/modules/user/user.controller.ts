@@ -1,11 +1,22 @@
-import { Controller, Get, Put, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private userService: UserService) {}
+
+  @Get()
+  findAll(@Query() pagination: PaginationDto) {
+    return this.userService.findAll(pagination.page!, pagination.limit!);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.userService.getProfile(id);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
@@ -23,7 +34,12 @@ export class UserController {
   }
 
   @Get('map')
-  getMap() {
+  getCityMap() {
     return this.userService.getCityMap();
+  }
+
+  @Get('dormitory-groups')
+  getDormitoryGroups() {
+    return this.userService.getDormitoryGroups();
   }
 }

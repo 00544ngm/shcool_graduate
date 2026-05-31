@@ -51,7 +51,7 @@ describe('PhotoService', () => {
   describe('create', () => {
     it('should create a photo', async () => {
       const file = { originalname: 'test.jpg', buffer: Buffer.from(''), mimetype: 'image/jpeg' } as Express.Multer.File;
-      const dto = { title: 'Test', description: 'Desc', location: 'Loc', tags: ['tag1'] };
+      const dto = { title: 'Test', description: 'Desc', location: 'Loc', tags: 'tag1' };
 
       storage.save.mockResolvedValue('photos/uuid-test.jpg');
       prisma.photo.create.mockResolvedValue(mockPhoto);

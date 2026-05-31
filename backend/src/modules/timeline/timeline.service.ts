@@ -30,9 +30,9 @@ export class TimelineService {
       }),
     ]);
 
-    const typedPhotos = photos.map((p) => ({ ...p, type: 'photo' as const }));
-    const typedVideos = videos.map((v) => ({ ...v, type: 'video' as const }));
-    const typedMoments = moments.map((m) => ({ ...m, type: 'moment' as const }));
+    const typedPhotos = photos.map((p) => ({ ...p, type: 'PHOTO' as const }));
+    const typedVideos = videos.map((v) => ({ ...v, type: 'VIDEO' as const }));
+    const typedMoments = moments.map((m) => ({ ...m, type: 'MOMENT' as const }));
 
     const allItems = [...typedPhotos, ...typedVideos, ...typedMoments];
 
