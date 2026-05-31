@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Plus, Clock, Lock, Unlock, Calendar } from 'lucide-react'
@@ -83,6 +84,7 @@ export default function Mailbox() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
+      <PageMeta title="未来信箱" description="写给未来的自己或同学，时光会赋予文字不一样的力量" />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-text-primary sm:text-2xl">未来信箱</h1>

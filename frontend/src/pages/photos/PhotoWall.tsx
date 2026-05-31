@@ -10,7 +10,7 @@ import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { photoApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { useFavorites } from '@/hooks/useFavorites'
-import { Starfield } from '@/components/Starfield'
+import { PageMeta } from '@/components/PageMeta'
 
 interface Photo {
   id: string
@@ -152,7 +152,9 @@ export default function PhotoWall() {
       setPreview('')
       const { data } = await photoApi.findAll(1)
       setPhotos(data.items || [])
-    } catch {} finally {
+    } catch (e: any) {
+      alert(e?.response?.data?.message || e?.message || '上传失败')
+    } finally {
       setUploading(false)
     }
   }
@@ -168,7 +170,7 @@ export default function PhotoWall() {
 
   return (
     <>
-      <Starfield />
+      <PageMeta title="星空照片墙" description="每一张照片，都是夜空中最亮的星" />
       <div className="px-4 py-6 relative z-10">
       {/* Header */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">

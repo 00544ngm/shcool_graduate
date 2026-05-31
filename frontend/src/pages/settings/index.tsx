@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
 import { Save, User, Camera } from 'lucide-react'
@@ -62,7 +63,7 @@ export default function Settings() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-2xl px-4 py-6">
-      <h1 className="mb-1 text-xl font-bold text-text-primary sm:text-2xl">个人设置</h1>
+      <PageMeta title="个人设置" description="编辑个人资料" />
       <p className="mb-8 text-xs text-text-muted">完善你的个人资料</p>
 
       <div className="rounded-xl border border-border bg-bg-card p-6">

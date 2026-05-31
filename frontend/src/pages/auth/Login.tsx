@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
@@ -34,6 +35,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg-primary px-4">
+      <PageMeta title="登录" description="登录班级时光馆" />
       {/* Background gradient */}
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.08),transparent_60%)]" />
 

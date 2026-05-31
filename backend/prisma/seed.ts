@@ -14,7 +14,10 @@ function hashPassword(password: string): string {
 
 async function main() {
   const adminUsername = process.env.ADMIN_USERNAME || 'admin';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+  if (!process.env.ADMIN_PASSWORD) {
+    throw new Error('ADMIN_PASSWORD environment variable is required for seeding');
+  }
+  const adminPassword = process.env.ADMIN_PASSWORD;
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@classmemories.com';
 
   const existing = await prisma.user.findFirst({

@@ -6,7 +6,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar } from '@/components/ui/avatar'
 import { Dialog, DialogTitle } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { momentApi, likeApi, uploadApi } from '@/services/api'
+import { PageMeta } from '@/components/PageMeta'
+import { momentApi, likeApi, commentApi, uploadApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 interface Moment {
@@ -32,6 +33,13 @@ export default function Moments() {
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set())
   const loaderRef = useRef<HTMLDivElement>(null)
+
+  /* ─── Comment Dialog ─── */
+  const [commentTarget, setCommentTarget] = useState<string | null>(null)
+  const [comments, setComments] = useState<Record<string, any[]>>({})
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [commentInput, setCommentInput] = useState('')
+  const [commentSubmitting, setCommentSubmitting] = useState(false)
 
   const fetchMoments = useCallback(async (p: number) => {
     try {
@@ -90,7 +98,9 @@ export default function Moments() {
       setWriteOpen(false)
       const { data } = await momentApi.findAll(1)
       setMoments(data.items || [])
-    } catch {} finally {
+    } catch (e: any) {
+      alert(e?.response?.data?.message || e?.message || '发布失败')
+    } finally {
       setSubmitting(false)
     }
   }
@@ -112,11 +122,47 @@ export default function Moments() {
             : m,
         ),
       )
-    } catch {}
+    } catch (e: any) {
+      alert(e?.response?.data?.message || e?.message || '操作失败')
+    }
+  }
+
+  const openComments = async (momentId: string) => {
+    setCommentTarget(momentId)
+    if (!comments[momentId]) {
+      setCommentsLoading(true)
+      try {
+        const { data } = await commentApi.findByTarget('moment', momentId)
+        setComments((prev) => ({ ...prev, [momentId]: data }))
+      } catch {} finally {
+        setCommentsLoading(false)
+      }
+    }
+  }
+
+  const postComment = async () => {
+    if (!commentTarget || !commentInput.trim() || !user) return
+    setCommentSubmitting(true)
+    try {
+      await commentApi.create({ targetType: 'moment', targetId: commentTarget, content: commentInput.trim() })
+      setCommentInput('')
+      const { data } = await commentApi.findByTarget('moment', commentTarget)
+      setComments((prev) => ({ ...prev, [commentTarget]: data }))
+      setMoments((prev) =>
+        prev.map((m) =>
+          m.id === commentTarget
+            ? { ...m, _count: { ...m._count, comments: (m._count?.comments ?? 0) + 1 } as any }
+            : m,
+        ),
+      )
+    } catch {} finally {
+      setCommentSubmitting(false)
+    }
   }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
+      <PageMeta title="班级动态" description="分享此刻，让同窗看见" />
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-text-primary sm:text-2xl">班级动态</h1>
@@ -185,10 +231,10 @@ export default function Moments() {
                         <Heart className={`h-3.5 w-3.5 ${likedSet.has(moment.id) ? 'fill-current' : ''}`} />
                         {moment._count?.likes ?? 0}
                       </button>
-                      <span className="flex items-center gap-1 text-xs text-text-muted">
+                      <button onClick={() => openComments(moment.id)} className="flex items-center gap-1 text-xs text-text-muted transition-colors hover:text-accent">
                         <MessageCircle className="h-3.5 w-3.5" />
                         {moment._count?.comments ?? 0}
-                      </span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -264,6 +310,43 @@ export default function Moments() {
             {submitting ? '发布中...' : '发布'}
           </Button>
         </div>
+      </Dialog>
+
+      {/* Comment Dialog */}
+      <Dialog open={!!commentTarget} onClose={() => setCommentTarget(null)}>
+        <DialogTitle>评论</DialogTitle>
+        {commentsLoading ? (
+          <div className="flex justify-center py-8"><Skeleton className="h-20 w-full" /></div>
+        ) : (
+          <div className="max-h-64 space-y-3 overflow-y-auto">
+            {commentTarget && (comments[commentTarget]?.length ?? 0) === 0 ? (
+              <p className="py-4 text-center text-sm text-text-muted">还没有评论</p>
+            ) : (
+              commentTarget && comments[commentTarget]?.map((c: any) => (
+                <div key={c.id} className="flex gap-2 rounded-lg bg-bg-elevated/50 p-3">
+                  <span className="shrink-0 text-sm font-medium text-text-primary">
+                    {c.user?.nickname || c.user?.username}
+                  </span>
+                  <p className="text-sm text-text-secondary">{c.content}</p>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+        {user && (
+          <div className="mt-4 flex gap-2">
+            <input
+              value={commentInput}
+              onChange={(e) => setCommentInput(e.target.value)}
+              placeholder="写评论..."
+              onKeyDown={(e) => e.key === 'Enter' && postComment()}
+              className="flex-1 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted"
+            />
+            <Button size="sm" onClick={postComment} disabled={!commentInput.trim() || commentSubmitting}>
+              {commentSubmitting ? '...' : '发表'}
+            </Button>
+          </div>
+        )}
       </Dialog>
     </div>
   )

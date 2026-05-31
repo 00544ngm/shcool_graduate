@@ -19,6 +19,7 @@ import { NotificationModule } from './modules/notification/notification.module';
 import { HealthModule } from './modules/health/health.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { FavoriteModule } from './modules/favorite/favorite.module';
+import { HomeMessageModule } from './modules/home-message/home-message.module';
 import { PrismaService } from './common/prisma.service';
 import { RolesGuard } from './common/guards/roles.guard';
 import { env } from './config/env';
@@ -61,6 +62,7 @@ import { env } from './config/env';
     HealthModule,
     UploadModule,
     FavoriteModule,
+    HomeMessageModule,
   ],
   providers: [PrismaService, RolesGuard],
   exports: [PrismaService],

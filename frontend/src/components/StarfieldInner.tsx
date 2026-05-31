@@ -74,7 +74,8 @@ export function StarfieldInner() {
         camera={{ position: [0, 0, 30], fov: 60 }}
         dpr={[1, 1.5]}
         gl={{ alpha: true, antialias: false }}
-        style={{ background: 'transparent' }}
+        style={{ background: 'transparent', pointerEvents: 'none' as any }}
+        events={undefined as any}
       >
         <Stars />
       </Canvas>

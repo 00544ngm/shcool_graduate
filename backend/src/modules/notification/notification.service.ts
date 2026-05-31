@@ -5,9 +5,9 @@ import { PrismaService } from '../../common/prisma.service';
 export class NotificationService {
   constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, type: string, content: string, relatedId?: string) {
+  async create(userId: string, type: string, content: string, relatedId?: string, fromUserId?: string) {
     return this.prisma.notification.create({
-      data: { userId, type, content, relatedId },
+      data: { userId, type, content, relatedId, fromUserId },
     });
   }
 
@@ -19,6 +19,9 @@ export class NotificationService {
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
+        include: {
+          fromUser: { select: { id: true, nickname: true, username: true, avatar: true } },
+        },
       }),
       this.prisma.notification.count({ where: { userId } }),
     ]);
@@ -37,5 +40,21 @@ export class NotificationService {
       where: { userId, read: false },
       data: { read: true },
     });
+  }
+
+  async broadcast(fromUserId: string, content: string) {
+    const users = await this.prisma.user.findMany({
+      where: { role: { not: 'VISITOR' } },
+      select: { id: true },
+    });
+    await this.prisma.notification.createMany({
+      data: users.map((u) => ({
+        userId: u.id,
+        type: 'SYSTEM',
+        content,
+        fromUserId,
+      })),
+    });
+    return { count: users.length };
   }
 }

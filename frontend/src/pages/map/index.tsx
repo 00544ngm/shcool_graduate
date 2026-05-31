@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Users, Search, LayoutGrid, Map as MapIcon } from 'lucide-react'
@@ -47,6 +48,7 @@ export default function Map() {
 
   return (
     <div className="px-4 py-6">
+      <PageMeta title="班级地图" description="毕业后天各一方？在地图上看看同学们都去了哪里" />
       <div className="mb-8 text-center">
         <h1 className="text-xl font-bold text-text-primary sm:text-2xl">班级地图</h1>
         <p className="mt-1 text-xs text-text-muted">毕业后，看看同学们都去了哪里</p>

@@ -1,8 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sparkles, Image, Video, Clock, MapPin, Users, Mail, MessageCircle, ArrowRight, Star, ChevronDown } from 'lucide-react'
+import { Sparkles, Image, Video, Clock, MapPin, Users, Mail, MessageCircle, ArrowRight, Star, ChevronDown, Send, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageMeta } from '@/components/PageMeta'
+import { homeMessageApi } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 /* ─── Graduation Countdown ─── */
 function getCountdown() {
@@ -100,26 +103,96 @@ function Stars() {
   )
 }
 
-/* ─── Scrolling Message Bar ─── */
-const scrollMessages = [
-  '📸 上传了新照片 — 时光定格，青春不散',
-  '🎬 发布了新视频 — 每一帧都是故事',
-  '💬 发表了新动态 — 分享此刻心情',
-  '🎓 距离毕业越来越近，珍惜每一天',
-  '🌟 班级时光馆，珍藏我们的回忆',
-]
+/* ─── 留言弹幕墙 ─── */
+interface MsgItem {
+  id: string
+  content: string
+  createdAt: string
+  user: { id: string; nickname?: string; username: string; avatar?: string | null }
+}
 
-function ScrollingBar() {
+function MessageWall() {
+  const { user } = useAuthStore()
+  const [messages, setMessages] = useState<MsgItem[]>([])
+  const [input, setInput] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const fetchMessages = useCallback(async () => {
+    try {
+      const { data } = await homeMessageApi.findAll(50)
+      if (Array.isArray(data)) setMessages(data)
+    } catch {}
+  }, [])
+
+  useEffect(() => { fetchMessages() }, [fetchMessages])
+
+  const handlePost = async () => {
+    if (!input.trim() || submitting || !user) return
+    setSubmitting(true)
+    try {
+      const { data } = await homeMessageApi.create(input.trim())
+      setMessages((prev) => [data, ...prev])
+      setInput('')
+    } catch {} finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await homeMessageApi.delete(id)
+      setMessages((prev) => prev.filter((m) => m.id !== id))
+    } catch {}
+  }
+
   return (
-    <div className="mt-8 overflow-hidden rounded-lg border border-accent/10 bg-accent/5 px-4 py-2.5 backdrop-blur-sm">
-      <div className="flex animate-marquee gap-8 whitespace-nowrap">
-        {[...scrollMessages, ...scrollMessages].map((msg, idx) => (
-          <span key={idx} className="flex items-center gap-2 text-xs text-accent/80">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent/60" />
-            {msg}
-          </span>
-        ))}
+    <div className="mt-8 w-full max-w-full">
+      <div className="mb-3 flex items-center gap-2 text-xs text-text-muted">
+        <MessageCircle className="h-3.5 w-3.5 text-accent" />
+        <span>留言墙 · {messages.length} 条留言</span>
       </div>
+      <div className="overflow-hidden rounded-lg border border-accent/10 bg-accent/5 px-4 py-2.5 backdrop-blur-sm">
+        <div className="flex animate-marquee gap-8 whitespace-nowrap">
+          {messages.length === 0 ? (
+            <span className="text-xs text-accent/60">还没有留言，来发第一条吧~</span>
+          ) : (
+            [...messages, ...messages].map((msg, idx) => (
+              <span key={`${msg.id}-${idx}`} className="inline-flex items-center gap-1 text-xs text-accent/80">
+                <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-accent/60" />
+                <span>{msg.user?.nickname || msg.user?.username}: {msg.content}</span>
+                {user?.id === msg.user.id && (
+                  <button onClick={() => handleDelete(msg.id)} className="ml-0.5 shrink-0 rounded-full p-0.5 text-accent/40 hover:bg-accent/10 hover:text-error transition-colors">
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </span>
+            ))
+          )}
+        </div>
+      </div>
+      {user && (
+        <div className="mt-2 flex gap-2">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handlePost() }}
+            placeholder="发个弹幕..."
+            maxLength={100}
+            className="flex-1 rounded-lg border border-accent/20 bg-accent/5 px-3 py-1.5 text-xs text-text-primary outline-none placeholder:text-text-muted focus:border-accent/50"
+          />
+          <button
+            onClick={handlePost}
+            disabled={!input.trim() || submitting}
+            className="flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs text-white transition-colors hover:bg-accent/90 disabled:opacity-40"
+          >
+            <Send className="h-3 w-3" />
+            发表
+          </button>
+        </div>
+      )}
+      {!user && (
+        <p className="mt-1 text-xs text-text-muted">登录后即可发表留言</p>
+      )}
     </div>
   )
 }
@@ -156,14 +229,14 @@ function FloatingCards() {
 
 /* ─── Features ─── */
 const features = [
-  { icon: Image, title: '星空照片墙', desc: 'Three.js 粒子星空背景，照片如繁星般悬浮。点击聚焦，左右浏览，每一张都是一段故事。' },
-  { icon: Video, title: '视频记忆馆', desc: '瀑布流视频展示，自动播放预览。支持弹幕、评论，让回忆更加生动。' },
-  { icon: Clock, title: '时光轴', desc: '纵向时间线，从入学到毕业，自动聚合照片、视频、动态。' },
-  { icon: MapPin, title: '班级地图', desc: '毕业后天各一方？在地图上看看同学们都去了哪里，点亮每一座城市。' },
-  { icon: Users, title: '人物档案馆', desc: '每位同学的个人主页，头像、寄语、相册、留言，记录青春的模样。' },
-  { icon: Mail, title: '未来信箱', desc: '写给未来的自己或同学。一年、三年、五年后开启，时光会赋予文字不一样的力量。' },
-  { icon: MessageCircle, title: '班级动态', desc: '类似朋友圈的班级社交圈。图文、视频，记录日常点滴。' },
-  { icon: Sparkles, title: 'AI 回忆助手', desc: '输入关键词，AI 自动检索相关照片、视频、留言，生成专属回忆总结。' },
+  { icon: Image, title: '星空照片墙', desc: 'Three.js 粒子星空背景，照片如繁星般悬浮。点击聚焦，左右浏览，每一张都是一段故事。', path: '/photos' },
+  { icon: Video, title: '视频记忆馆', desc: '瀑布流视频展示，自动播放预览。支持弹幕、评论，让回忆更加生动。', path: '/videos' },
+  { icon: Clock, title: '时光轴', desc: '纵向时间线，从入学到毕业，自动聚合照片、视频、动态。', path: '/timeline' },
+  { icon: MapPin, title: '班级地图', desc: '毕业后天各一方？在地图上看看同学们都去了哪里，点亮每一座城市。', path: '/map' },
+  { icon: Users, title: '人物档案馆', desc: '每位同学的个人主页，头像、寄语、相册、留言，记录青春的模样。', path: '/members' },
+  { icon: Mail, title: '未来信箱', desc: '写给未来的自己或同学。一年、三年、五年后开启，时光会赋予文字不一样的力量。', path: '/mailbox' },
+  { icon: MessageCircle, title: '班级动态', desc: '类似朋友圈的班级社交圈。图文、视频，记录日常点滴。', path: '/moments' },
+  { icon: Sparkles, title: 'AI 回忆助手', desc: '输入关键词，AI 自动检索相关照片、视频、留言，生成专属回忆总结。', path: '/ai' },
 ]
 
 function FeaturesSection() {
@@ -181,21 +254,22 @@ function FeaturesSection() {
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {features.map((f, idx) => (
-          <motion.div
-            key={f.title}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-50px' }}
-            transition={{ delay: idx * 0.05 }}
-            whileHover={{ y: -4 }}
-            className="group rounded-xl border border-border bg-bg-card/50 p-5 transition-colors hover:border-accent/20"
-          >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-              <f.icon className="h-5 w-5 text-accent" />
-            </div>
-            <h3 className="mb-1.5 font-medium text-text-primary">{f.title}</h3>
-            <p className="text-xs leading-relaxed text-text-muted">{f.desc}</p>
-          </motion.div>
+          <Link to={f.path} key={f.title} className="block h-full">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ delay: idx * 0.05 }}
+              whileHover={{ y: -4 }}
+              className="flex h-full flex-col rounded-xl border border-border bg-bg-card/50 p-5 transition-colors hover:border-accent/20"
+            >
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                <f.icon className="h-5 w-5 text-accent" />
+              </div>
+              <h3 className="mb-1.5 font-medium text-text-primary">{f.title}</h3>
+              <p className="flex-1 text-xs leading-relaxed text-text-muted">{f.desc}</p>
+            </motion.div>
+          </Link>
         ))}
       </div>
     </section>
@@ -229,6 +303,7 @@ function CTASection() {
 export default function Home() {
   return (
     <div className="relative">
+      <PageMeta title="首页" description="班级时光馆 — 珍藏每一刻青春记忆" />
       <Stars />
 
       {/* Hero */}
@@ -284,8 +359,8 @@ export default function Home() {
           </motion.div>
         </motion.div>
 
-        {/* Scrolling Message Bar */}
-        <ScrollingBar />
+        {/* Message Wall */}
+        <MessageWall />
 
         {/* Floating Cards */}
         <FloatingCards />

@@ -1,12 +1,14 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Users, Search, MapPin } from 'lucide-react'
+import { Users, Search, MapPin, Trash2 } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { userApi } from '@/services/api'
+import { userApi, adminApi } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 
 interface Member {
   id: string
@@ -20,6 +22,7 @@ interface Member {
 }
 
 export default function Members() {
+  const { user } = useAuthStore()
   const [members, setMembers] = useState<Member[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -31,6 +34,14 @@ export default function Members() {
       .finally(() => setLoading(false))
   }, [])
 
+  const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`确定要删除用户「${name}」吗？此操作不可撤销。`)) return
+    try {
+      await adminApi.deleteUser(id)
+      setMembers((prev) => prev.filter((m) => m.id !== id))
+    } catch {}
+  }
+
   const filtered = search
     ? members.filter((m) =>
         (m.nickname || m.username).toLowerCase().includes(search.toLowerCase()) ||
@@ -40,6 +51,7 @@ export default function Members() {
 
   return (
     <div className="px-4 py-6">
+      <PageMeta title="人物档案馆" description="每一位同学的个人主页，记录青春的模样" />
       <div className="mb-6">
         <h1 className="text-xl font-bold text-text-primary sm:text-2xl">人物档案馆</h1>
         <p className="mt-1 text-xs text-text-muted">每一位同学，都是时光里独一无二的主角</p>
@@ -79,7 +91,7 @@ export default function Members() {
             >
               <Link
                 to={`/members/${member.id}`}
-                className="flex items-center gap-4 rounded-xl border border-border bg-bg-card p-4 transition-colors hover:border-accent/20"
+                className="group flex items-center gap-4 rounded-xl border border-border bg-bg-card p-4 transition-colors hover:border-accent/20"
               >
                 <Avatar src={member.avatar} fallback={member.nickname || member.username} size="lg" />
                 <div className="min-w-0 flex-1">
@@ -97,6 +109,15 @@ export default function Members() {
                     </p>
                   )}
                 </div>
+                {user?.role === 'ADMIN' && user.id !== member.id && (
+                  <button
+                    onClick={(e) => { e.preventDefault(); handleDelete(member.id, member.nickname || member.username) }}
+                    className="shrink-0 rounded-lg p-2 text-text-muted opacity-0 transition-all hover:bg-error/10 hover:text-error group-hover:opacity-100"
+                    title="删除用户"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
               </Link>
             </motion.div>
           ))}

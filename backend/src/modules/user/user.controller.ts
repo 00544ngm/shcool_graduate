@@ -13,11 +13,6 @@ export class UserController {
     return this.userService.findAll(pagination.page!, pagination.limit!);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.getProfile(id);
-  }
-
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@CurrentUser() user: { id: string }) {
@@ -41,5 +36,10 @@ export class UserController {
   @Get('dormitory-groups')
   getDormitoryGroups() {
     return this.userService.getDormitoryGroups();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.userService.getProfile(id);
   }
 }

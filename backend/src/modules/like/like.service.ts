@@ -37,7 +37,7 @@ export class LikeService {
 
     if (owner && owner.userId !== userId) {
       const label = targetType === 'photo' ? '照片' : targetType === 'video' ? '视频' : '动态';
-      await this.notificationService.create(owner.userId, 'like', `有人赞了你的${label}`, targetId);
+      await this.notificationService.create(owner.userId, 'like', `赞了你的${label}`, targetId, userId);
     }
 
     const count = await this.prisma.like.count({ where: { targetType, targetId } });

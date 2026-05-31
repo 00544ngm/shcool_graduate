@@ -1,9 +1,12 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, Heart, MessageCircle, UserPlus, Sparkles, CheckCheck, Loader2 } from 'lucide-react'
+import { Bell, Heart, MessageCircle, UserPlus, Sparkles, CheckCheck, Loader2, Send, Megaphone } from 'lucide-react'
+import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { notificationApi } from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 import { useNavigate } from 'react-router-dom'
 
 interface Notification {
@@ -13,6 +16,7 @@ interface Notification {
   read: boolean
   relatedId?: string
   createdAt: string
+  fromUser?: { id: string; nickname: string; username: string; avatar?: string | null }
 }
 
 const typeIcons: Record<string, React.ReactNode> = {
@@ -30,11 +34,15 @@ const typeLabels: Record<string, string> = {
 }
 
 export default function Notifications() {
+  const { isModerator } = useAuthStore()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [broadcastInput, setBroadcastInput] = useState('')
+  const [broadcasting, setBroadcasting] = useState(false)
+  const [broadcastResult, setBroadcastResult] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -78,8 +86,24 @@ export default function Notifications() {
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
+  const handleBroadcast = async () => {
+    if (!broadcastInput.trim() || broadcasting) return
+    setBroadcasting(true)
+    setBroadcastResult('')
+    try {
+      const { data } = await notificationApi.broadcast(broadcastInput.trim())
+      setBroadcastResult(`已发送给 ${data.count} 人`)
+      setBroadcastInput('')
+    } catch (err: any) {
+      setBroadcastResult(err?.response?.data?.message || '发送失败')
+    } finally {
+      setBroadcasting(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
+      <PageMeta title="通知" description="查看班级动态通知" />
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-text-primary sm:text-2xl">消息通知</h1>
@@ -94,6 +118,32 @@ export default function Notifications() {
           </Button>
         )}
       </div>
+
+      {/* Broadcast — Admin/Moderator only */}
+      {isModerator() && (
+        <div className="mb-6 rounded-xl border border-accent/20 bg-accent/5 p-4">
+          <div className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
+            <Megaphone className="h-4 w-4 text-accent" />
+            发送系统通知
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={broadcastInput}
+              onChange={(e) => setBroadcastInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleBroadcast() }}
+              placeholder="输入通知内容，将发送给所有成员..."
+              maxLength={500}
+              className="flex-1 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-accent/50"
+            />
+            <Button onClick={handleBroadcast} disabled={!broadcastInput.trim() || broadcasting} size="sm">
+              {broadcasting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
+          {broadcastResult && (
+            <p className="mt-1 text-xs text-text-muted">{broadcastResult}</p>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3">
@@ -122,11 +172,24 @@ export default function Notifications() {
                   }`}
                   onClick={() => handleMarkRead(notification)}
                 >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-elevated">
-                    {typeIcons[notification.type] || <Bell className="h-4 w-4 text-text-muted" />}
-                  </div>
+                  {notification.fromUser ? (
+                    <Avatar
+                      src={notification.fromUser.avatar || undefined}
+                      fallback={notification.fromUser.nickname || notification.fromUser.username}
+                      size="sm"
+                    />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-elevated">
+                      {typeIcons[notification.type] || <Bell className="h-4 w-4 text-text-muted" />}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-text-primary">{notification.content}</p>
+                    <p className="text-sm text-text-primary">
+                      {notification.fromUser && (
+                        <span className="font-medium">{notification.fromUser.nickname || notification.fromUser.username} </span>
+                      )}
+                      {notification.content}
+                    </p>
                     <p className="mt-0.5 text-xs text-text-muted">
                       {typeLabels[notification.type] || notification.type}
                       {' · '}

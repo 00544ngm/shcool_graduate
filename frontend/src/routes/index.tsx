@@ -1,23 +1,37 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { createRoutesFromElements, Route, useNavigate, Outlet } from 'react-router-dom'
 import { setNavigate } from '@/services/navigate'
+import { Loader2 } from 'lucide-react'
 import MainLayout from '@/layouts/MainLayout'
-import Home from '@/pages/home'
-import Login from '@/pages/auth/Login'
-import Register from '@/pages/auth/Register'
-import PhotoWall from '@/pages/photos/PhotoWall'
-import PhotoDetail from '@/pages/photos/PhotoDetail'
-import VideoGallery from '@/pages/videos/VideoGallery'
-import Timeline from '@/pages/timeline'
-import Map from '@/pages/map'
-import Members from '@/pages/members'
-import MemberDetail from '@/pages/members/MemberDetail'
-import Mailbox from '@/pages/mailbox'
-import Dormitory from '@/pages/dormitory'
-import Moments from '@/pages/moments'
-import AIAssistant from '@/pages/ai'
-import Notifications from '@/pages/notifications'
-import Settings from '@/pages/settings'
+
+const Home = lazy(() => import('@/pages/home'))
+const Login = lazy(() => import('@/pages/auth/Login'))
+const Register = lazy(() => import('@/pages/auth/Register'))
+const PhotoWall = lazy(() => import('@/pages/photos/PhotoWall'))
+const PhotoDetail = lazy(() => import('@/pages/photos/PhotoDetail'))
+const VideoGallery = lazy(() => import('@/pages/videos/VideoGallery'))
+const Timeline = lazy(() => import('@/pages/timeline'))
+const Map = lazy(() => import('@/pages/map'))
+const Members = lazy(() => import('@/pages/members'))
+const MemberDetail = lazy(() => import('@/pages/members/MemberDetail'))
+const Mailbox = lazy(() => import('@/pages/mailbox'))
+const Dormitory = lazy(() => import('@/pages/dormitory'))
+const Moments = lazy(() => import('@/pages/moments'))
+const AIAssistant = lazy(() => import('@/pages/ai'))
+const Notifications = lazy(() => import('@/pages/notifications'))
+const Settings = lazy(() => import('@/pages/settings'))
+
+function PageLoader() {
+  return (
+    <div className="flex flex-1 items-center justify-center py-20">
+      <Loader2 className="h-6 w-6 animate-spin text-accent" />
+    </div>
+  )
+}
+
+function Lazy({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>
+}
 
 function NavigateInitializer() {
   const navigate = useNavigate()
@@ -27,23 +41,23 @@ function NavigateInitializer() {
 
 export const routes = createRoutesFromElements(
   <Route element={<NavigateInitializer />}>
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
+    <Route path="/login" element={<Lazy><Login /></Lazy>} />
+    <Route path="/register" element={<Lazy><Register /></Lazy>} />
     <Route element={<MainLayout />}>
-      <Route path="/" element={<Home />} />
-      <Route path="/photos" element={<PhotoWall />} />
-      <Route path="/photos/:id" element={<PhotoDetail />} />
-      <Route path="/videos" element={<VideoGallery />} />
-      <Route path="/timeline" element={<Timeline />} />
-      <Route path="/map" element={<Map />} />
-      <Route path="/members" element={<Members />} />
-      <Route path="/members/:id" element={<MemberDetail />} />
-      <Route path="/mailbox" element={<Mailbox />} />
-      <Route path="/dormitory" element={<Dormitory />} />
-      <Route path="/moments" element={<Moments />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/ai" element={<AIAssistant />} />
-      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/" element={<Lazy><Home /></Lazy>} />
+      <Route path="/photos" element={<Lazy><PhotoWall /></Lazy>} />
+      <Route path="/photos/:id" element={<Lazy><PhotoDetail /></Lazy>} />
+      <Route path="/videos" element={<Lazy><VideoGallery /></Lazy>} />
+      <Route path="/timeline" element={<Lazy><Timeline /></Lazy>} />
+      <Route path="/map" element={<Lazy><Map /></Lazy>} />
+      <Route path="/members" element={<Lazy><Members /></Lazy>} />
+      <Route path="/members/:id" element={<Lazy><MemberDetail /></Lazy>} />
+      <Route path="/mailbox" element={<Lazy><Mailbox /></Lazy>} />
+      <Route path="/dormitory" element={<Lazy><Dormitory /></Lazy>} />
+      <Route path="/moments" element={<Lazy><Moments /></Lazy>} />
+      <Route path="/settings" element={<Lazy><Settings /></Lazy>} />
+      <Route path="/ai" element={<Lazy><AIAssistant /></Lazy>} />
+      <Route path="/notifications" element={<Lazy><Notifications /></Lazy>} />
     </Route>
   </Route>,
 )

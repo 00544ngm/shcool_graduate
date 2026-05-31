@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -32,6 +33,7 @@ export default function Dormitory() {
 
   return (
     <div className="px-4 py-6">
+      <PageMeta title="宿舍空间" description="回到那间熟悉的宿舍" />
       <div className="mb-8 text-center">
         <h1 className="text-xl font-bold text-text-primary sm:text-2xl">宿舍空间</h1>
         <p className="mt-1 text-xs text-text-muted">每个宿舍都是一个温暖的小家</p>

@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
@@ -55,6 +56,7 @@ export default function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg-primary px-4">
+      <PageMeta title="注册" description="加入班级时光馆" />
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(245,158,11,0.08),transparent_60%)]" />
 
       <div className="relative w-full max-w-md animate-fade-in">

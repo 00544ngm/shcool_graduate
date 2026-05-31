@@ -11,7 +11,7 @@ interface DanmakuItem {
 interface DanmakuProps {
   duration: number // video duration in seconds
   currentTime: number
-  comments: Array<{ id: string; content: string; createdAt: string }>
+  comments: Array<{ id: string; content: string; createdAt: string; user?: { nickname?: string; username?: string } }>
   playing: boolean
 }
 
@@ -31,9 +31,10 @@ export function Danmaku({ duration, currentTime, comments, playing }: DanmakuPro
       const targetTime = duration > 0 ? (idx / Math.max(comments.length, 1)) * duration : 0
       if (currentTime >= targetTime && currentTime < targetTime + 5) {
         sentRef.current.add(c.id)
+        const name = c.user?.nickname || c.user?.username || ''
         newItems.push({
           id: c.id,
-          text: c.content,
+          text: name ? `${name}: ${c.content}` : c.content,
           top: Math.random() * 60 + 10, // 10%-70% from top
           time: currentTime,
           color: COLORS[Math.floor(Math.random() * COLORS.length)],

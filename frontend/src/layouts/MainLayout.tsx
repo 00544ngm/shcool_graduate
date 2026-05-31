@@ -2,6 +2,8 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import { LogOut, Bell, Menu, X, Home, Image, Video, Clock, MapPin, Users, Mail, MessageCircle, Sparkles, Building, Settings } from 'lucide-react'
+import { Starfield } from '@/components/Starfield'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useState } from 'react'
 
 const navItems = [
@@ -29,7 +31,8 @@ export default function MainLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="flex min-h-screen flex-col bg-bg-primary">
+      <Starfield />
       {/* Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-bg-primary/80 backdrop-blur-lg">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
@@ -40,7 +43,7 @@ export default function MainLayout() {
 
           {/* Desktop Nav */}
           <nav className="hidden gap-1 md:flex">
-            {navItems.slice(0, 6).map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -129,8 +132,10 @@ export default function MainLayout() {
       )}
 
       {/* Main Content */}
-      <main className="mx-auto max-w-7xl pt-16">
-        <Outlet />
+      <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col pt-16">
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </main>
 
       {/* Footer */}

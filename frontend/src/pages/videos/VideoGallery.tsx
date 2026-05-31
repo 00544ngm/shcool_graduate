@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, Video, Play, Heart, MessageCircle, X } from 'lucide-react'
@@ -39,7 +40,7 @@ export default function VideoGallery() {
   const [duration, setDuration] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [danmakuEnabled, setDanmakuEnabled] = useState(true)
-  const [danmakuComments, setDanmakuComments] = useState<{ id: string; content: string; createdAt: string }[]>([])
+  const [danmakuComments, setDanmakuComments] = useState<{ id: string; content: string; createdAt: string; user?: { nickname?: string; username?: string } }[]>([])
   const [danmakuInput, setDanmakuInput] = useState('')
 
   const loaderRef = useRef<HTMLDivElement>(null)
@@ -98,7 +99,9 @@ export default function VideoGallery() {
       setFile(null)
       const { data } = await videoApi.findAll(1)
       setVideos(data.items || [])
-    } catch {} finally {
+    } catch (e: any) {
+      alert(e?.response?.data?.message || e?.message || '上传失败')
+    } finally {
       setUploading(false)
     }
   }
@@ -148,6 +151,7 @@ export default function VideoGallery() {
 
   return (
     <div className="px-4 py-6">
+      <PageMeta title="视频记忆馆" description="重温珍贵影像，每一帧都是故事" />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-text-primary sm:text-2xl">视频记忆馆</h1>

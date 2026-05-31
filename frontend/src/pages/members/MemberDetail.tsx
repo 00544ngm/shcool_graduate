@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -66,6 +67,7 @@ export default function MemberDetail() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mx-auto max-w-2xl px-4 py-6">
+      <PageMeta title={profile?.nickname || profile?.username || '成员档案'} description="同学个人主页" />
       <Link to="/members" className="mb-6 inline-flex items-center gap-1 text-sm text-text-muted hover:text-text-primary transition-colors">
         <ArrowLeft className="h-4 w-4" />返回人物档案馆
       </Link>

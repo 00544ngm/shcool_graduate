@@ -87,6 +87,7 @@ export const notificationApi = {
   findMy: (page = 1, limit = 20) => api.get('/notifications', { params: { page, limit } }),
   markRead: (id: string) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post('/notifications/read-all'),
+  broadcast: (content: string) => api.post('/notifications/broadcast', { content }),
 }
 
 /* ─── User ─── */
@@ -112,6 +113,7 @@ export const mailboxApi = {
 /* ─── AI ─── */
 export const aiApi = {
   search: (query: string) => api.post('/ai/search', { query }),
+  chat: (message: string) => api.post('/ai/chat', { message }),
 }
 
 /* ─── Favorite ─── */
@@ -120,9 +122,21 @@ export const favoriteApi = {
   findMy: () => api.get('/favorites'),
 }
 
+/* ─── Admin ─── */
+export const adminApi = {
+  deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
+}
+
 /* ─── Health ─── */
 export const healthApi = {
   check: () => api.get('/health'),
+}
+
+/* ─── Home Messages ─── */
+export const homeMessageApi = {
+  findAll: (limit = 50) => api.get('/home-messages', { params: { limit } }),
+  create: (content: string) => api.post('/home-messages', { content }),
+  delete: (id: string) => api.delete(`/home-messages/${id}`),
 }
 
 /* ─── Upload ─── */

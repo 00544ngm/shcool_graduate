@@ -1,3 +1,4 @@
+import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -36,7 +37,13 @@ export default function Timeline() {
 
   useEffect(() => {
     timelineApi.get()
-      .then(({ data }) => setItems(data.data || data || []))
+      .then(({ data }) => {
+        const raw = data.data || data || []
+        const flat: TimelineItem[] = Array.isArray(raw)
+          ? raw.flatMap((g: any) => g.items ?? [])
+          : []
+        setItems(flat)
+      })
       .catch(() => setItems([]))
       .finally(() => setLoading(false))
   }, [])
@@ -50,6 +57,7 @@ export default function Timeline() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
+      <PageMeta title="时间轴" description="从入学到毕业，每一刻都值得纪念" />
       <div className="mb-8 text-center">
         <h1 className="text-xl font-bold text-text-primary sm:text-2xl">时间轴</h1>
         <p className="mt-1 text-xs text-text-muted">从入学到毕业，每一刻都值得纪念</p>
