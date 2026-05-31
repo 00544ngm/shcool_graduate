@@ -19,9 +19,11 @@ export class CommentService {
     // Fetch the target owner and create comment in parallel
     const ownerPromise = targetType === 'photo'
       ? this.prisma.photo.findUnique({ where: { id: dto.targetId }, select: { userId: true } })
-      : dto.targetType === 'video'
+      : targetType === 'video'
         ? this.prisma.video.findUnique({ where: { id: dto.targetId }, select: { userId: true } })
-        : Promise.resolve(null);
+        : targetType === 'moment'
+          ? this.prisma.moment.findUnique({ where: { id: dto.targetId }, select: { userId: true } })
+          : Promise.resolve(null);
 
     const [comment, owner] = await Promise.all([
       this.prisma.comment.create({
@@ -34,7 +36,7 @@ export class CommentService {
     ]);
 
     if (owner && owner.userId !== userId) {
-      const label = targetType === 'photo' ? 'photo' : 'video';
+      const label = targetType === 'photo' ? 'photo' : targetType === 'video' ? 'video' : 'moment';
       await this.notificationService.create(owner.userId, 'comment', `Someone commented on your ${label}`, dto.targetId);
     }
 

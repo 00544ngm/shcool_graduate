@@ -26,7 +26,9 @@ export class LikeService {
       ? this.prisma.photo.findUnique({ where: { id: targetId }, select: { userId: true } })
       : targetType === 'video'
         ? this.prisma.video.findUnique({ where: { id: targetId }, select: { userId: true } })
-        : Promise.resolve(null);
+        : targetType === 'moment'
+          ? this.prisma.moment.findUnique({ where: { id: targetId }, select: { userId: true } })
+          : Promise.resolve(null);
 
     const [, owner] = await Promise.all([
       this.prisma.like.create({ data: { userId, targetType, targetId } }),
@@ -34,7 +36,7 @@ export class LikeService {
     ]);
 
     if (owner && owner.userId !== userId) {
-      const label = targetType === 'photo' ? 'photo' : 'video';
+      const label = targetType === 'photo' ? 'photo' : targetType === 'video' ? 'video' : 'moment';
       await this.notificationService.create(owner.userId, 'like', `Someone liked your ${label}`, targetId);
     }
 

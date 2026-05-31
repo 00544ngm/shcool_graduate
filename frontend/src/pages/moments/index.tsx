@@ -36,15 +36,15 @@ export default function Moments() {
       const { data } = await momentApi.findAll(p)
       return data
     } catch {
-      return { data: [], total: 0 }
+      return { items: [], total: 0 }
     }
   }, [])
 
   useEffect(() => {
     setLoading(true)
     fetchMoments(1).then((data) => {
-      setMoments(data.data || [])
-      setHasMore((data.data?.length ?? 0) >= 20)
+      setMoments(data.items || [])
+      setHasMore((data.items?.length ?? 0) >= 20)
       setLoading(false)
     })
   }, [fetchMoments])
@@ -65,7 +65,7 @@ export default function Moments() {
   useEffect(() => {
     if (page <= 1) return
     fetchMoments(page).then((data) => {
-      const items = data.data || []
+      const items = data.items || []
       setMoments((prev) => [...prev, ...items])
       setHasMore(items.length >= 20)
       setLoadingMore(false)
@@ -80,7 +80,7 @@ export default function Moments() {
       setContent('')
       setWriteOpen(false)
       const { data } = await momentApi.findAll(1)
-      setMoments(data.data || [])
+      setMoments(data.items || [])
     } catch {} finally {
       setSubmitting(false)
     }
@@ -89,7 +89,7 @@ export default function Moments() {
   const handleLike = async (momentId: string) => {
     if (!user) return
     try {
-      await likeApi.toggle({ targetType: 'MOMENT', targetId: momentId })
+      await likeApi.toggle({ targetType: 'moment', targetId: momentId })
       setLikedSet((prev) => {
         const next = new Set(prev)
         if (next.has(momentId)) next.delete(momentId)

@@ -26,17 +26,15 @@ export default function Dormitory() {
     // Use city data as proxy; in production, a dedicated dormitory API would exist
     userApi.getCityMap()
       .then(({ data }) => {
-        const raw = data.data || data || []
-        // Transform city data into dormitory-like groups for UI demonstration
-        const dormGroups: DormitoryGroup[] = raw.map((city: any) => ({
-          name: `${city.city}宿舍`,
-          count: city.count,
-          members: (city.members || []).map((m: any) => ({
-            id: m.id,
-            nickname: m.nickname,
-            username: m.username,
-            avatar: m.avatar,
-            bio: `来自 ${city.city}`,
+        const raw = data.distribution || {}
+        const dormGroups = Object.entries(raw).map(([city, info]: any) => ({
+          name: `${city}宿舍`,
+          count: info.count,
+          members: (info.names || []).map((name: string, i: number) => ({
+            id: `${city}-${i}`,
+            nickname: name,
+            username: name,
+            bio: `来自 ${city}`,
           })),
         }))
         setGroups(dormGroups)

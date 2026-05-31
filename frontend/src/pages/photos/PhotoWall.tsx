@@ -58,14 +58,14 @@ export default function PhotoWall() {
       const { data } = q ? await photoApi.search(q, p) : await photoApi.findAll(p)
       return data
     } catch {
-      return { data: [], total: 0 }
+      return { items: [], total: 0 }
     }
   }, [])
 
   useEffect(() => {
     setLoading(true)
     fetchPhotos(1, search || undefined).then((data) => {
-      let items = data.data || []
+      let items = data.items || []
       setPhotos(items)
       setPage(1)
       setHasMore(items.length >= 20)
@@ -92,7 +92,7 @@ export default function PhotoWall() {
   useEffect(() => {
     if (page <= 1) return
     fetchPhotos(page, search || undefined).then((data) => {
-      const items = data.data || []
+      const items = data.items || []
       setPhotos((prev) => [...prev, ...items])
       setHasMore(items.length >= 20)
       setLoadingMore(false)
@@ -138,7 +138,7 @@ export default function PhotoWall() {
       setFile(null)
       setPreview('')
       const { data } = await photoApi.findAll(1)
-      setPhotos(data.data || [])
+      setPhotos(data.items || [])
     } catch {} finally {
       setUploading(false)
     }

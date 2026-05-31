@@ -47,7 +47,7 @@ export default function PhotoDetail() {
         setPhoto(data)
         setLikeCount(data._count?.likes ?? 0)
       }),
-      commentApi.findByTarget('PHOTO', id).then(({ data }) => setComments(data.data || data)),
+      commentApi.findByTarget('photo', id).then(({ data }) => setComments(data.data || data)),
       likeApi.getLikes('photo', id).then(({ data }) => {
         if (data.userLiked) setLiked(true)
       }),

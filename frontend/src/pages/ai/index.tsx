@@ -51,7 +51,7 @@ export default function AIAssistant() {
         role: 'assistant',
         content: `关于「${searchQuery}」的回忆，我找到了以下内容：`,
         results: {
-          photos: (data.data || []).map((p: any) => ({
+          photos: (data.items || []).map((p: any) => ({
             id: p.id,
             title: p.title,
             imageUrl: p.thumbnailUrl || p.imageUrl,

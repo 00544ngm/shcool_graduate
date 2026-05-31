@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -57,6 +58,16 @@ async function bootstrap() {
   );
 
   const port = process.env.PORT || 3000;
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Class Memories API')
+    .setDescription('班级时光馆 - 毕业班级数字记忆归档平台')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, document);
+
   await app.listen(port);
 }
 bootstrap();

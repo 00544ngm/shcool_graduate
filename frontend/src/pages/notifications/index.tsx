@@ -40,8 +40,8 @@ export default function Notifications() {
   useEffect(() => {
     notificationApi.findMy(1)
       .then(({ data }) => {
-        setNotifications(data.data || data || [])
-        setHasMore(data.data?.length >= 20)
+        setNotifications(data.items || [])
+        setHasMore((data.items?.length ?? 0) >= 20)
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -67,7 +67,7 @@ export default function Notifications() {
     const p = page + 1
     try {
       const { data } = await notificationApi.findMy(p)
-      const items = data.data || data || []
+      const items = data.items || []
       setNotifications((prev) => [...prev, ...items])
       setPage(p)
       setHasMore(items.length >= 20)

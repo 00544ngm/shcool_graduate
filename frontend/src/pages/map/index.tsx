@@ -22,7 +22,19 @@ export default function Map() {
 
   useEffect(() => {
     userApi.getCityMap()
-      .then(({ data }) => setCities(data.data || data || []))
+      .then(({ data }) => {
+        const raw = data.distribution || {}
+        const list = Object.entries(raw).map(([city, info]: any) => ({
+          city,
+          count: info.count,
+          members: (info.names || []).map((name: string, i: number) => ({
+            id: `${city}-${i}`,
+            nickname: name,
+            username: name,
+          })),
+        }))
+        setCities(list)
+      })
       .catch(() => setCities([]))
       .finally(() => setLoading(false))
   }, [])

@@ -58,15 +58,15 @@ export default function VideoGallery() {
       const { data } = await videoApi.findAll(p)
       return data
     } catch {
-      return { data: [], total: 0 }
+      return { items: [], total: 0 }
     }
   }, [])
 
   useEffect(() => {
     setLoading(true)
     fetchVideos(1).then((data) => {
-      setVideos(data.data || [])
-      setHasMore((data.data?.length ?? 0) >= 20)
+      setVideos(data.items || [])
+      setHasMore((data.items?.length ?? 0) >= 20)
       setLoading(false)
     })
   }, [fetchVideos])
@@ -87,7 +87,7 @@ export default function VideoGallery() {
   useEffect(() => {
     if (page <= 1) return
     fetchVideos(page).then((data) => {
-      const items = data.data || []
+      const items = data.items || []
       setVideos((prev) => [...prev, ...items])
       setHasMore(items.length >= 20)
       setLoadingMore(false)
@@ -106,7 +106,7 @@ export default function VideoGallery() {
       setTitle('')
       setFile(null)
       const { data } = await videoApi.findAll(1)
-      setVideos(data.data || [])
+      setVideos(data.items || [])
     } catch {} finally {
       setUploading(false)
     }
