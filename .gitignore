@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.vscode/
+.idea/
+*.tsbuildinfo
+pnpm-lock.yaml
+.DS_Store
+Thumbs.db
+
+# Backend
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Frontend
+frontend/dist/
+
+# Memory / Claude
+.claude/

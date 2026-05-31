@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  VISITOR
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+enum LetterStatus {
+  SEALED
+  OPENED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  nickname     String
+  avatar       String?
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(MEMBER)
+  bio          String?
+  graduationPhoto String? @map("graduation_photo")
+  dormitory    String?
+  city         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  photos       Photo[]
+  videos       Video[]
+  comments     Comment[]
+  moments      Moment[]
+  letters      FutureLetter[]
+  likes        Like[]
+
+  @@map("users")
+}
+
+model Photo {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String?
+  description String?
+  imageUrl    String   @map("image_url")
+  takenAt     DateTime? @map("taken_at")
+  location    String?
+  tags        String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("photos")
+}
+
+model Video {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String?
+  videoUrl  String   @map("video_url")
+  coverUrl  String?  @map("cover_url")
+  duration  Int?
+  category  String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("videos")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  userId     String   @map("user_id")
+  content    String
+  parentId   String?  @map("parent_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User     @relation(fields: [userId], references: [id])
+  parent     Comment? @relation("CommentReply", fields: [parentId], references: [id])
+  replies    Comment[] @relation("CommentReply")
+
+  @@map("comments")
+}
+
+model Moment {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  content   String
+  images    String[]
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("moments")
+}
+
+model FutureLetter {
+  id         String       @id @default(cuid())
+  userId     String       @map("user_id")
+  title      String
+  content    String
+  unlockTime DateTime     @map("unlock_time")
+  status     LetterStatus @default(SEALED)
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  user       User         @relation(fields: [userId], references: [id])
+
+  @@map("future_letters")
+}
+
+model Like {
+  id         String @id @default(cuid())
+  targetType String @map("target_type")
+  targetId   String @map("target_id")
+  userId     String @map("user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user       User   @relation(fields: [userId], references: [id])
+
+  @@unique([targetType, targetId, userId])
+  @@map("likes")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  type      String
+  content   String
+  read      Boolean  @default(false)
+  relatedId String?  @map("related_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
