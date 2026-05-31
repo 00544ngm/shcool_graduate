@@ -48,7 +48,7 @@ export default function PhotoDetail() {
         setLikeCount(data._count?.likes ?? 0)
       }),
       commentApi.findByTarget('PHOTO', id).then(({ data }) => setComments(data.data || data)),
-      likeApi.getLikes('PHOTO', id).then(({ data }) => {
+      likeApi.getLikes('photo', id).then(({ data }) => {
         if (data.userLiked) setLiked(true)
       }),
     ]).catch(() => setError('加载失败')).finally(() => setLoading(false))
@@ -57,20 +57,20 @@ export default function PhotoDetail() {
   const handleLike = async () => {
     if (!user || !id) return
     try {
-      await likeApi.toggle({ targetType: 'PHOTO', targetId: id })
+      await likeApi.toggle({ targetType: 'photo', targetId: id })
       setLiked(!liked)
       setLikeCount((c) => (liked ? c - 1 : c + 1))
-    } catch {}
+    } catch { console.error('Like failed') }
   }
 
   const handleComment = async () => {
     if (!commentText.trim() || !id || !user) return
     setSubmitting(true)
     try {
-      const { data } = await commentApi.create({ targetType: 'PHOTO', targetId: id, content: commentText })
+      const { data } = await commentApi.create({ targetType: 'photo', targetId: id, content: commentText })
       setComments((prev) => [...prev, data])
       setCommentText('')
-    } catch {} finally {
+    } catch { console.error('Comment failed') } finally {
       setSubmitting(false)
     }
   }
@@ -79,11 +79,11 @@ export default function PhotoDetail() {
     if (!replyText.trim() || !id || !user) return
     setReplySubmitting(true)
     try {
-      const { data } = await commentApi.create({ targetType: 'PHOTO', targetId: id, content: replyText, parentId })
+      const { data } = await commentApi.create({ targetType: 'photo', targetId: id, content: replyText, parentId })
       setComments((prev) => [...prev, data])
       setReplyText('')
       setReplyingTo(null)
-    } catch {} finally {
+    } catch { console.error('Reply failed') } finally {
       setReplySubmitting(false)
     }
   }
@@ -93,7 +93,7 @@ export default function PhotoDetail() {
     try {
       await photoApi.delete(id)
       navigate('/photos')
-    } catch {}
+    } catch { console.error('Delete failed') }
   }
 
   const insertEmoji = (emoji: string, target: 'comment' | 'reply') => {

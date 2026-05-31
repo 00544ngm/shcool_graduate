@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { MailboxService } from './mailbox.service';
 import { PrismaService } from '../../common/prisma.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
@@ -117,12 +117,12 @@ describe('MailboxService', () => {
       await expect(service.openLetter('letter-1', 'other-user')).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw NotFoundException if letter is still sealed', async () => {
+    it('should throw BadRequestException if letter is still sealed', async () => {
       const futureDate = new Date('2099-01-01');
       const sealedLetter = { ...mockLetter, unlockTime: futureDate };
       prisma.futureLetter.findUnique.mockResolvedValue(sealedLetter);
 
-      await expect(service.openLetter('letter-1', 'user-1')).rejects.toThrow(NotFoundException);
+      await expect(service.openLetter('letter-1', 'user-1')).rejects.toThrow(BadRequestException);
     });
   });
 });

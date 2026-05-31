@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { navigate } from './navigate'
 
 const api = axios.create({
   baseURL: '/api',
@@ -20,7 +21,7 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
+        navigate('/login')
       }
     }
     return Promise.reject(err)

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PhotoService } from './photo.service';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage/storage.service';
@@ -134,10 +134,10 @@ describe('PhotoService', () => {
       await expect(service.delete('nonexistent', member)).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw NotFoundException if not owner', async () => {
+    it('should throw ForbiddenException if not owner', async () => {
       prisma.photo.findUnique.mockResolvedValue(mockPhoto);
 
-      await expect(service.delete('photo-1', other)).rejects.toThrow(NotFoundException);
+      await expect(service.delete('photo-1', other)).rejects.toThrow(ForbiddenException);
     });
   });
 });

@@ -1,4 +1,6 @@
-import { createRoutesFromElements, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { createRoutesFromElements, Route, useNavigate, Outlet } from 'react-router-dom'
+import { setNavigate } from '@/services/navigate'
 import MainLayout from '@/layouts/MainLayout'
 import Home from '@/pages/home'
 import Login from '@/pages/auth/Login'
@@ -17,13 +19,16 @@ import AIAssistant from '@/pages/ai'
 import Notifications from '@/pages/notifications'
 import Settings from '@/pages/settings'
 
+function NavigateInitializer() {
+  const navigate = useNavigate()
+  useEffect(() => { setNavigate(navigate) }, [navigate])
+  return <Outlet />
+}
+
 export const routes = createRoutesFromElements(
-  <>
-    {/* Auth routes — no layout */}
+  <Route element={<NavigateInitializer />}>
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
-
-    {/* Main app routes */}
     <Route element={<MainLayout />}>
       <Route path="/" element={<Home />} />
       <Route path="/photos" element={<PhotoWall />} />
@@ -40,5 +45,5 @@ export const routes = createRoutesFromElements(
       <Route path="/ai" element={<AIAssistant />} />
       <Route path="/notifications" element={<Notifications />} />
     </Route>
-  </>,
+  </Route>,
 )

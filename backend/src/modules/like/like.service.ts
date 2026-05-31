@@ -10,6 +10,7 @@ export class LikeService {
   ) {}
 
   async toggle(userId: string, targetType: string, targetId: string) {
+    targetType = targetType.toLowerCase();
     const existing = await this.prisma.like.findUnique({
       where: { targetType_targetId_userId: { targetType, targetId, userId } },
     });
@@ -51,5 +52,12 @@ export class LikeService {
       include: { user: { select: { id: true, nickname: true, avatar: true } } },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  async userLiked(userId: string, targetType: string, targetId: string) {
+    const like = await this.prisma.like.findUnique({
+      where: { targetType_targetId_userId: { targetType: targetType.toLowerCase(), targetId, userId } },
+    });
+    return !!like;
   }
 }

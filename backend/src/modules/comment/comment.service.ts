@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { NotificationService } from '../notification/notification.service';
 import { canModify } from '../../common/guards/roles.guard';
@@ -12,8 +12,12 @@ export class CommentService {
   ) {}
 
   async create(userId: string, dto: CreateCommentDto) {
+    // Normalize targetType to lowercase for consistent queries
+    const targetType = dto.targetType.toLowerCase();
+    dto.targetType = targetType;
+
     // Fetch the target owner and create comment in parallel
-    const ownerPromise = dto.targetType === 'photo'
+    const ownerPromise = targetType === 'photo'
       ? this.prisma.photo.findUnique({ where: { id: dto.targetId }, select: { userId: true } })
       : dto.targetType === 'video'
         ? this.prisma.video.findUnique({ where: { id: dto.targetId }, select: { userId: true } })
@@ -30,7 +34,7 @@ export class CommentService {
     ]);
 
     if (owner && owner.userId !== userId) {
-      const label = dto.targetType === 'photo' ? 'photo' : 'video';
+      const label = targetType === 'photo' ? 'photo' : 'video';
       await this.notificationService.create(owner.userId, 'comment', `Someone commented on your ${label}`, dto.targetId);
     }
 
@@ -57,7 +61,7 @@ export class CommentService {
   async delete(id: string, user: { id: string; role: string }) {
     const comment = await this.prisma.comment.findUnique({ where: { id } });
     if (!comment) throw new NotFoundException('Comment not found');
-    if (!canModify(comment.userId, user)) throw new NotFoundException('Not authorized');
+    if (!canModify(comment.userId, user)) throw new ForbiddenException('Not authorized');
     await this.prisma.comment.deleteMany({ where: { OR: [{ id }, { parentId: id }] } });
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage/storage.service';
 import { canModify } from '../../common/guards/roles.guard';
@@ -85,7 +85,7 @@ export class PhotoService {
   async delete(id: string, user: { id: string; role: string }) {
     const photo = await this.prisma.photo.findUnique({ where: { id } });
     if (!photo) throw new NotFoundException('Photo not found');
-    if (!canModify(photo.userId, user)) throw new NotFoundException('Not authorized');
+    if (!canModify(photo.userId, user)) throw new ForbiddenException('Not authorized');
     await this.storage.delete(photo.imageUrl);
     await this.prisma.photo.delete({ where: { id } });
   }

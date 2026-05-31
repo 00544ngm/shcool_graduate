@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { PrismaService } from '../../common/prisma.service';
 import { NotificationService } from '../notification/notification.service';
@@ -128,10 +128,10 @@ describe('CommentService', () => {
       await expect(service.delete('nonexistent', member)).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw if not owner', async () => {
+    it('should throw ForbiddenException if not owner', async () => {
       prisma.comment.findUnique.mockResolvedValue(mockComment);
 
-      await expect(service.delete('comment-1', other)).rejects.toThrow(NotFoundException);
+      await expect(service.delete('comment-1', other)).rejects.toThrow(ForbiddenException);
     });
   });
 });

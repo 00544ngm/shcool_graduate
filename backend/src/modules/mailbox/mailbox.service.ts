@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { CreateLetterDto } from './dto/create-letter.dto';
 
@@ -34,8 +34,9 @@ export class MailboxService {
 
   async openLetter(id: string, userId: string) {
     const letter = await this.prisma.futureLetter.findUnique({ where: { id } });
-    if (!letter || letter.userId !== userId) throw new NotFoundException();
-    if (new Date() < letter.unlockTime) throw new NotFoundException('Letter is still sealed');
+    if (!letter) throw new NotFoundException('Letter not found');
+    if (letter.userId !== userId) throw new NotFoundException('Letter not found');
+    if (new Date() < letter.unlockTime) throw new BadRequestException('Letter is still sealed');
 
     return this.prisma.futureLetter.update({
       where: { id },

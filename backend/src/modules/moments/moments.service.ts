@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { canModify } from '../../common/guards/roles.guard';
 import { CreateMomentDto } from './dto/create-moment.dto';
@@ -29,7 +29,7 @@ export class MomentsService {
   async delete(id: string, user: { id: string; role: string }) {
     const moment = await this.prisma.moment.findUnique({ where: { id } });
     if (!moment) throw new NotFoundException('Moment not found');
-    if (!canModify(moment.userId, user)) throw new NotFoundException('Not authorized');
+    if (!canModify(moment.userId, user)) throw new ForbiddenException('Not authorized');
     await this.prisma.moment.delete({ where: { id } });
   }
 }
