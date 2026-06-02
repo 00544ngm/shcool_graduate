@@ -51,7 +51,7 @@ export default function Notifications() {
         setNotifications(data.items || [])
         setHasMore((data.items?.length ?? 0) >= 20)
       })
-      .catch(() => {})
+      .catch((e) => console.error('load notifications failed', e))
       .finally(() => setLoading(false))
   }, [])
 
@@ -59,7 +59,7 @@ export default function Notifications() {
     try {
       await notificationApi.markAllRead()
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-    } catch {}
+    } catch (e) { console.error('notification action failed', e) }
   }
 
   const handleMarkRead = async (notification: Notification) => {
@@ -67,7 +67,7 @@ export default function Notifications() {
     try {
       await notificationApi.markRead(notification.id)
       setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)))
-    } catch {}
+    } catch (e) { console.error('notification action failed', e) }
   }
 
   const loadMore = async () => {
@@ -79,7 +79,7 @@ export default function Notifications() {
       setNotifications((prev) => [...prev, ...items])
       setPage(p)
       setHasMore(items.length >= 20)
-    } catch {} finally {
+    } catch (e) { console.error('notification action failed', e) } finally {
       setLoadingMore(false)
     }
   }

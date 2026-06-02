@@ -10,7 +10,7 @@ export function useFavorites() {
     if (!user) { setFavorites([]); return }
     favoriteApi.findMy()
       .then(({ data }) => setFavorites((data || []).map((f: any) => f.targetId)))
-      .catch(() => {})
+      .catch((e) => console.error('load favorites failed', e))
   }, [user?.id])
 
   const toggleFavorite = useCallback(async (id: string) => {

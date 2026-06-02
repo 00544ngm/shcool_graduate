@@ -27,6 +27,11 @@ export class NotificationController {
     return this.notificationService.findMy(user.id, pagination.page!, pagination.limit!);
   }
 
+  @Get('unread')
+  getUnreadCount(@CurrentUser() user: { id: string }) {
+    return this.notificationService.getUnreadCount(user.id);
+  }
+
   @Post(':id/read')
   markRead(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     return this.notificationService.markRead(id, user.id);

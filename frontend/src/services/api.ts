@@ -1,6 +1,138 @@
 import axios from 'axios'
 import { navigate } from './navigate'
 
+/* ─── API Response Types ─── */
+export interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  totalPages: number
+}
+
+export interface UserInfo {
+  id: string
+  nickname?: string
+  username?: string
+  avatar?: string
+}
+
+export interface PhotoItem {
+  id: string
+  title?: string
+  description?: string
+  imageUrl: string
+  thumbnailUrl?: string
+  takenAt?: string
+  location?: string
+  tags?: string[]
+  createdAt: string
+  user?: UserInfo
+  _count?: { likes: number; comments: number }
+}
+
+export interface VideoItem {
+  id: string
+  title?: string
+  videoUrl: string
+  coverUrl?: string
+  duration?: number
+  createdAt: string
+  user?: UserInfo
+  _count?: { likes: number; comments: number }
+}
+
+export interface CommentItem {
+  id: string
+  content: string
+  targetType: string
+  targetId: string
+  parentId?: string
+  createdAt: string
+  user?: UserInfo
+  replies?: CommentItem[]
+}
+
+export interface MomentItem {
+  id: string
+  content: string
+  images?: string[]
+  createdAt: string
+  user?: UserInfo
+  _count?: { likes: number; comments: number }
+}
+
+export interface NotificationItem {
+  id: string
+  type: string
+  content: string
+  read: boolean
+  relatedId?: string
+  createdAt: string
+  fromUser?: UserInfo
+}
+
+export interface LikeResult {
+  liked: boolean
+  count: number
+}
+
+export interface FavoriteItem {
+  id: string
+  targetType: string
+  targetId: string
+  createdAt: string
+}
+
+export interface LetterItem {
+  id: string
+  title: string
+  content: string
+  unlockTime: string
+  status: 'SEALED' | 'OPENED'
+  createdAt: string
+}
+
+export interface ChatResult {
+  reply: string
+  remaining: number
+  totalQuota: number
+}
+
+export interface AiSearchResult {
+  summary: string
+  photos: PhotoItem[]
+  moments: MomentItem[]
+}
+
+export interface StatsResult {
+  users: number
+  photos: number
+  videos: number
+  comments: number
+  letters: number
+  moments: number
+}
+
+export interface AdminUserItem {
+  id: string
+  username: string
+  nickname?: string
+  email: string
+  role: string
+  createdAt: string
+}
+
+export interface UserProfile {
+  id: string
+  username: string
+  nickname?: string
+  avatar?: string
+  bio?: string
+  city?: string
+  dormitory?: string
+  role: string
+}
+
 const api = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
@@ -88,6 +220,7 @@ export const notificationApi = {
   markRead: (id: string) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post('/notifications/read-all'),
   broadcast: (content: string) => api.post('/notifications/broadcast', { content }),
+  unread: () => api.get('/notifications/unread'),
 }
 
 /* ─── User ─── */

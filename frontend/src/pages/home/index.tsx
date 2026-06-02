@@ -123,7 +123,7 @@ function MessageWall() {
     try {
       const { data } = await homeMessageApi.findAll(50)
       if (Array.isArray(data)) setMessages(data)
-    } catch {}
+    } catch (e) { console.error('fetch messages failed', e) }
   }, [])
 
   useEffect(() => { fetchMessages() }, [fetchMessages])

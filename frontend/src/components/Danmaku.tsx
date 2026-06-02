@@ -20,14 +20,22 @@ const COLORS = ['#f59e0b', '#10b981', '#ef4444', '#3b82f6', '#a855f7', '#ec4899'
 export function Danmaku({ duration, currentTime, comments, playing }: DanmakuProps) {
   const [items, setItems] = useState<DanmakuItem[]>([])
   const sentRef = useRef<Set<string>>(new Set())
+  const commentIndexRef = useRef<Map<string, number>>(new Map())
+
+  // Build index map when comments change
+  useEffect(() => {
+    const map = new Map<string, number>()
+    comments.forEach((c, i) => map.set(c.id, i))
+    commentIndexRef.current = map
+  }, [comments])
 
   const sendDanmaku = useCallback(() => {
     if (!playing) return
     const newItems: DanmakuItem[] = []
+    const indexMap = commentIndexRef.current
     for (const c of comments) {
       if (sentRef.current.has(c.id)) continue
-      // Stagger danmaku across the video duration
-      const idx = comments.indexOf(c)
+      const idx = indexMap.get(c.id) ?? 0
       const targetTime = duration > 0 ? (idx / Math.max(comments.length, 1)) * duration : 0
       if (currentTime >= targetTime && currentTime < targetTime + 5) {
         sentRef.current.add(c.id)
@@ -35,7 +43,7 @@ export function Danmaku({ duration, currentTime, comments, playing }: DanmakuPro
         newItems.push({
           id: c.id,
           text: name ? `${name}: ${c.content}` : c.content,
-          top: Math.random() * 60 + 10, // 10%-70% from top
+          top: Math.random() * 60 + 10,
           time: currentTime,
           color: COLORS[Math.floor(Math.random() * COLORS.length)],
         })

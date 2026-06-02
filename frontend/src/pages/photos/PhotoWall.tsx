@@ -49,6 +49,7 @@ export default function PhotoWall() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string>('')
   const loaderRef = useRef<HTMLDivElement>(null)
+  const fetchIdRef = useRef(0) // prevents stale responses
 
   /* ─── All unique tags / locations / years for filtering ─── */
   const allTags = useMemo(() => {
@@ -73,8 +74,10 @@ export default function PhotoWall() {
 
   /* ─── Fetch ─── */
   const fetchPhotos = useCallback(async (p: number, q?: string) => {
+    const id = ++fetchIdRef.current
     try {
       const { data } = q ? await photoApi.search(q, p) : await photoApi.findAll(p)
+      if (id !== fetchIdRef.current) return null // stale
       return data
     } catch {
       return { items: [], total: 0 }
@@ -84,6 +87,7 @@ export default function PhotoWall() {
   useEffect(() => {
     setLoading(true)
     fetchPhotos(1, search || undefined).then((data) => {
+      if (!data) return
       let items = data.items || []
       setPhotos(items)
       setPage(1)
@@ -110,12 +114,15 @@ export default function PhotoWall() {
 
   useEffect(() => {
     if (page <= 1) return
+    const id = ++fetchIdRef.current
     fetchPhotos(page, search || undefined).then((data) => {
+      if (!data) return // stale
       const items = data.items || []
       setPhotos((prev) => [...prev, ...items])
       setHasMore(items.length >= 20)
       setLoadingMore(false)
     })
+    return () => { fetchIdRef.current++ } // cancel on unmount/rerun
   }, [page, fetchPhotos, search])
 
   /* ─── Sort & Filter ─── */
@@ -126,8 +133,8 @@ export default function PhotoWall() {
     if (yearFilter) items = items.filter((p) => p.takenAt && new Date(p.takenAt).getFullYear().toString() === yearFilter)
     if (showFavoritesOnly) items = items.filter((p) => isFavorite(p.id))
     items.sort((a, b) => {
-      const da = a.takenAt || a.id
-      const db = b.takenAt || b.id
+      const da = a.takenAt || a.createdAt
+      const db = b.takenAt || b.createdAt
       return sortOrder === 'newest'
         ? new Date(db).getTime() - new Date(da).getTime()
         : new Date(da).getTime() - new Date(db).getTime()
@@ -149,7 +156,7 @@ export default function PhotoWall() {
       if (uploadForm.tags) formData.append('tags', uploadForm.tags)
       await photoApi.create(formData)
       setUploadOpen(false)
-      setUploadForm({ title: '', description: '', takenAt: '', location: '' })
+      setUploadForm({ title: '', description: '', takenAt: '', location: '', tags: '' })
       setFile(null)
       setPreview('')
       const { data } = await photoApi.findAll(1)

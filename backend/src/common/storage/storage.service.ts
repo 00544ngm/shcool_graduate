@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { randomUUID } from 'crypto';
 
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private uploadDir = path.resolve(process.env.STORAGE_PATH || './uploads');
 
   async save(file: Express.Multer.File, subDir = 'photos'): Promise<string> {
@@ -21,6 +22,10 @@ export class StorageService {
 
   async delete(fileUrl: string): Promise<void> {
     const filepath = path.join(this.uploadDir, fileUrl.replace('/uploads/', ''));
-    await fs.unlink(filepath).catch(() => {});
+    try {
+      await fs.unlink(filepath);
+    } catch (e) {
+      this.logger.warn(`Failed to delete file: ${filepath}`, e);
+    }
   }
 }

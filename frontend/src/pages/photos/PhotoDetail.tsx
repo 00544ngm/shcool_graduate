@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
-import { photoApi, commentApi, likeApi } from '@/services/api'
+import { photoApi, commentApi, likeApi, type PhotoItem } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { useFavorites } from '@/hooks/useFavorites'
+import { useToastStore } from '@/stores/toast'
 
 interface Comment {
   id: string
@@ -26,7 +27,7 @@ export default function PhotoDetail() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
 
-  const [photo, setPhoto] = useState<any>(null)
+  const [photo, setPhoto] = useState<PhotoItem & { userId?: string } | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [liked, setLiked] = useState(false)
@@ -39,6 +40,7 @@ export default function PhotoDetail() {
   const [showEmoji, setShowEmoji] = useState(false)
   const [emojiTarget, setEmojiTarget] = useState<'comment' | 'reply'>('comment')
   const [error, setError] = useState('')
+  const toast = useToastStore((s) => s.toast)
   const { isFavorite, toggleFavorite } = useFavorites()
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function PhotoDetail() {
       const { data } = await likeApi.toggle({ targetType: 'photo', targetId: id })
       setLiked(data.liked)
       setLikeCount(data.count)
-    } catch { console.error('Like failed') }
+    } catch { toast('点赞失败', 'error') }
   }
 
   const handleComment = async () => {
@@ -71,7 +73,7 @@ export default function PhotoDetail() {
       const { data } = await commentApi.create({ targetType: 'photo', targetId: id, content: commentText })
       setComments((prev) => [...prev, data])
       setCommentText('')
-    } catch { console.error('Comment failed') } finally {
+    } catch { toast('评论失败', 'error') } finally {
       setSubmitting(false)
     }
   }
@@ -84,7 +86,7 @@ export default function PhotoDetail() {
       setComments((prev) => [...prev, data])
       setReplyText('')
       setReplyingTo(null)
-    } catch { console.error('Reply failed') } finally {
+    } catch { toast('回复失败', 'error') } finally {
       setReplySubmitting(false)
     }
   }
@@ -94,7 +96,7 @@ export default function PhotoDetail() {
     try {
       await photoApi.delete(id)
       navigate('/photos')
-    } catch { console.error('Delete failed') }
+    } catch { toast('删除失败', 'error') }
   }
 
   const insertEmoji = (emoji: string, target: 'comment' | 'reply') => {
@@ -188,7 +190,7 @@ export default function PhotoDetail() {
                 {photo.location}
               </span>
             )}
-            {photo.tags?.length > 0 && (
+            {photo.tags && photo.tags.length > 0 && (
               <span className="flex items-center gap-1.5">
                 {photo.tags.map((tag: string) => (
                   <span key={tag} className="rounded-full bg-bg-elevated px-2 py-0.5 text-xs text-text-muted">

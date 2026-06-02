@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { NotificationService } from '../notification/notification.service';
+import { TargetType } from '../../common/enums/target-type';
 
 @Injectable()
 export class LikeService {
@@ -22,11 +23,11 @@ export class LikeService {
     }
 
     // Create like and fetch owner in parallel
-    const ownerPromise = targetType === 'photo'
+    const ownerPromise = targetType === TargetType.PHOTO
       ? this.prisma.photo.findUnique({ where: { id: targetId }, select: { userId: true } })
-      : targetType === 'video'
+      : targetType === TargetType.VIDEO
         ? this.prisma.video.findUnique({ where: { id: targetId }, select: { userId: true } })
-        : targetType === 'moment'
+        : targetType === TargetType.MOMENT
           ? this.prisma.moment.findUnique({ where: { id: targetId }, select: { userId: true } })
           : Promise.resolve(null);
 
@@ -36,7 +37,7 @@ export class LikeService {
     ]);
 
     if (owner && owner.userId !== userId) {
-      const label = targetType === 'photo' ? '照片' : targetType === 'video' ? '视频' : '动态';
+      const label = targetType === TargetType.PHOTO ? '照片' : targetType === TargetType.VIDEO ? '视频' : '动态';
       await this.notificationService.create(owner.userId, 'like', `赞了你的${label}`, targetId, userId);
     }
 

@@ -1,13 +1,17 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/stores/auth'
+import { useSocketStore } from '@/stores/socket'
+import { notificationApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
-import { LogOut, Bell, Menu, X, Home, Image, Video, Clock, MapPin, Users, Mail, MessageCircle, Sparkles, Building, Settings } from 'lucide-react'
+import { LogOut, Bell, Menu, X, Home, Image, Video, Clock, MapPin, Users, Mail, MessageCircle, Sparkles, Building, Settings, Shield } from 'lucide-react'
 import { Starfield } from '@/components/Starfield'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ToastContainer } from '@/components/ToastContainer'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-const navItems = [
+interface NavItem { path: string; label: string; icon: React.ComponentType<{ className?: string }> }
+
+const navItems: NavItem[] = [
   { path: '/', label: '首页', icon: Home },
   { path: '/photos', label: '星空照片墙', icon: Image },
   { path: '/videos', label: '视频记忆馆', icon: Video },
@@ -25,6 +29,24 @@ export default function MainLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
+  const { unreadCount, connect: connectSocket, disconnect: disconnectSocket, setUnreadCount } = useSocketStore()
+
+  useEffect(() => {
+    if (user) {
+      const token = localStorage.getItem('token')
+      if (token) connectSocket(token)
+      notificationApi.unread().then(({ data }) => {
+        setUnreadCount(data ?? 0)
+      }).catch((e) => console.error('fetch unread count failed', e))
+    }
+    return () => { disconnectSocket() }
+  }, [user])
+
+  useEffect(() => {
+    if (location.pathname === '/notifications') {
+      setUnreadCount(0)
+    }
+  }, [location.pathname])
 
   const handleLogout = () => {
     logout()
@@ -63,9 +85,14 @@ export default function MainLayout() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <Link to="/notifications">
+                <Link to="/notifications" className="relative">
                   <Button variant="ghost" size="icon">
                     <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold leading-none text-white">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </Button>
                 </Link>
                 <div className="hidden items-center gap-1 md:flex">

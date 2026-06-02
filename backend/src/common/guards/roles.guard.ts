@@ -1,14 +1,8 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ROLE_HIERARCHY } from '../config/roles';
 
 export const ROLES_KEY = 'roles';
-
-const ROLE_HIERARCHY: Record<string, number> = {
-  VISITOR: 0,
-  MEMBER: 1,
-  MODERATOR: 2,
-  ADMIN: 3,
-};
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -24,7 +18,6 @@ export class RolesGuard implements CanActivate {
     const { user } = context.switchToHttp().getRequest();
     const userLevel = ROLE_HIERARCHY[user?.role] ?? -1;
 
-    // Check if user's role meets ANY of the required role levels
     const hasRole = requiredRoles.some((role) => {
       const requiredLevel = ROLE_HIERARCHY[role] ?? 99;
       return userLevel >= requiredLevel;

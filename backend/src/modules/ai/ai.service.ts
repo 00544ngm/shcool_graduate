@@ -1,7 +1,5 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
 
 const DEEPSEEK_URL = 'https://api.deepseek.com/v1/chat/completions';
 
@@ -11,21 +9,10 @@ export class AiService {
   private apiKey: string;
 
   constructor(private prisma: PrismaService) {
-    this.apiKey = process.env.DEEPSEEK_API_KEY || this.loadKeyFromFile();
-  }
-
-  private loadKeyFromFile(): string {
-    const paths = [
-      resolve(__dirname, '..', '..', '..', '..', 'apikey.txt'),
-      resolve(__dirname, '..', '..', '..', 'apikey.txt'),
-    ];
-    for (const p of paths) {
-      if (existsSync(p)) {
-        return readFileSync(p, 'utf-8').trim();
-      }
+    this.apiKey = process.env.DEEPSEEK_API_KEY || '';
+    if (!this.apiKey) {
+      this.logger.warn('DEEPSEEK_API_KEY not set, AI features will be limited');
     }
-    this.logger.warn('DEEPSEEK_API_KEY not found, AI search will fallback to keyword mode');
-    return '';
   }
 
   async search(query: string) {

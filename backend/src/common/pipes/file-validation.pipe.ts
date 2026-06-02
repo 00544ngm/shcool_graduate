@@ -7,6 +7,33 @@ const ALLOWED_MIME_TYPES = new Set([
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
+// Magic bytes signature: array of { offset, bytes } checks per mime type
+// All checks must pass for the type to be valid.
+const MAGIC_BYTES: Record<string, { offset: number; bytes: number[] }[]> = {
+  'image/jpeg':    [{ offset: 0, bytes: [0xff, 0xd8, 0xff] }],
+  'image/png':     [{ offset: 0, bytes: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] }],
+  'image/gif':     [{ offset: 0, bytes: [0x47, 0x49, 0x46, 0x38] }], // 37 61 or 39 61
+  'image/webp':    [
+    { offset: 0, bytes: [0x52, 0x49, 0x46, 0x46] }, // RIFF
+    { offset: 8, bytes: [0x57, 0x45, 0x42, 0x50] }, // WEBP
+  ],
+  'video/mp4':     [{ offset: 4, bytes: [0x66, 0x74, 0x79, 0x70] }], // ftyp box
+  'video/webm':    [{ offset: 0, bytes: [0x1a, 0x45, 0xdf, 0xa3] }],
+  'video/quicktime': [{ offset: 4, bytes: [0x66, 0x74, 0x79, 0x70] }], // ftyp box
+};
+
+function validateMagicBytes(file: Express.Multer.File): boolean {
+  const checks = MAGIC_BYTES[file.mimetype];
+  if (!checks) return true;
+
+  const buf = file.buffer;
+  return checks.every(({ offset, bytes }) => {
+    const end = offset + bytes.length;
+    if (buf.length < end) return false;
+    return bytes.every((byte, i) => buf[offset + i] === byte);
+  });
+}
+
 @Injectable()
 export class FileValidationPipe implements PipeTransform {
   constructor(
@@ -25,6 +52,12 @@ export class FileValidationPipe implements PipeTransform {
     if (!allowed.has(file.mimetype)) {
       throw new BadRequestException(
         `File type ${file.mimetype} is not allowed. Accepted: ${[...allowed].join(', ')}`,
+      );
+    }
+
+    if (!validateMagicBytes(file)) {
+      throw new BadRequestException(
+        `File content does not match declared type ${file.mimetype}`,
       );
     }
 

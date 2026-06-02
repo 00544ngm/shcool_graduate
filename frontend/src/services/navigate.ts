@@ -1,6 +1,8 @@
-let navigateFn: ((path: string) => void) | null = null
+import type { NavigateFunction } from 'react-router-dom'
 
-export const setNavigate = (fn: (path: string) => void) => {
+let navigateFn: NavigateFunction | null = null
+
+export const setNavigate = (fn: NavigateFunction) => {
   navigateFn = fn
 }
 

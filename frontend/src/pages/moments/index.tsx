@@ -144,7 +144,7 @@ export default function Moments() {
       try {
         const { data } = await commentApi.findByTarget('moment', momentId)
         setComments((prev) => ({ ...prev, [momentId]: data }))
-      } catch {} finally {
+      } catch (e) { console.error('moment action failed', e) } finally {
         setCommentsLoading(false)
       }
     }
@@ -165,7 +165,7 @@ export default function Moments() {
             : m,
         ),
       )
-    } catch {} finally {
+    } catch (e) { console.error('post comment failed', e) } finally {
       setCommentSubmitting(false)
     }
   }

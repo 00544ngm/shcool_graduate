@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage/storage.service';
 import { canModify } from '../../common/guards/roles.guard';
@@ -43,7 +43,7 @@ export class VideoService {
   async delete(id: string, user: { id: string; role: string }) {
     const video = await this.prisma.video.findUnique({ where: { id } });
     if (!video) throw new NotFoundException('Video not found');
-    if (!canModify(video.userId, user)) throw new NotFoundException('Not authorized');
+    if (!canModify(video.userId, user)) throw new ForbiddenException('Not authorized');
     await this.storage.delete(video.videoUrl);
     if (video.coverUrl) await this.storage.delete(video.coverUrl);
     await this.prisma.video.delete({ where: { id } });

@@ -1,14 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
+import { NotificationGateway } from './notification.gateway';
 
 @Injectable()
 export class NotificationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationGateway: NotificationGateway,
+  ) {}
 
   async create(userId: string, type: string, content: string, relatedId?: string, fromUserId?: string) {
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: { userId, type, content, relatedId, fromUserId },
+      include: {
+        fromUser: { select: { id: true, nickname: true, username: true, avatar: true } },
+      },
     });
+    this.notificationGateway.sendNotification(userId, notification);
+    return notification;
   }
 
   async findMy(userId: string, page = 1, limit = 20) {
@@ -47,14 +56,29 @@ export class NotificationService {
       where: { role: { not: 'VISITOR' } },
       select: { id: true },
     });
-    await this.prisma.notification.createMany({
-      data: users.map((u) => ({
-        userId: u.id,
-        type: 'SYSTEM',
-        content,
-        fromUserId,
-      })),
+
+    const data = users.map((u) => ({
+      userId: u.id,
+      type: 'SYSTEM' as const,
+      content,
+      fromUserId,
+    }));
+
+    const notifications = await this.prisma.notification.createManyAndReturn({
+      data,
+      include: {
+        fromUser: { select: { id: true, nickname: true, username: true, avatar: true } },
+      },
     });
+
+    for (const n of notifications) {
+      this.notificationGateway.sendNotification(n.userId, n);
+    }
+
     return { count: users.length };
+  }
+
+  async getUnreadCount(userId: string) {
+    return this.prisma.notification.count({ where: { userId, read: false } });
   }
 }

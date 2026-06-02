@@ -1,7 +1,7 @@
 import { PageMeta } from '@/components/PageMeta'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, Video, Play, Heart, MessageCircle, X } from 'lucide-react'
+import { Upload, Video, Play, Heart, MessageCircle, X, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogTitle } from '@/components/ui/dialog'
@@ -136,7 +136,7 @@ export default function VideoGallery() {
       const { data } = await commentApi.create({ targetType: 'video', targetId: playerVideo.id, content: danmakuInput })
       setDanmakuComments((prev) => [...prev, data])
       setDanmakuInput('')
-    } catch {}
+    } catch (e) { console.error('sendDanmaku failed', e) }
   }
 
   const handleTimeUpdate = () => {
@@ -230,18 +230,10 @@ export default function VideoGallery() {
 
       {/* Video Player Dialog */}
       {playerOpen && playerVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl mx-4">
-            {/* Close button */}
-            <button
-              onClick={closePlayer}
-              className="absolute -top-10 right-0 text-white/60 hover:text-white transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
-
-            {/* Video Container */}
-            <div className="relative bg-black rounded-xl overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black">
+          <div className="flex-1 overflow-y-auto p-4 pt-12">
+            <div className="relative w-full max-w-4xl mx-auto">
+              <div className="relative bg-black rounded-xl overflow-hidden">
               <video
                 ref={videoRef}
                 src={playerVideo.videoUrl}
@@ -267,7 +259,15 @@ export default function VideoGallery() {
 
             {/* Controls */}
             <div className="flex items-center justify-between mt-3">
-              <h3 className="text-white font-medium truncate">{playerVideo.title}</h3>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={closePlayer}
+                  className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />返回
+                </button>
+                <h3 className="text-white font-medium truncate max-w-[200px] sm:max-w-md">{playerVideo.title}</h3>
+              </div>
               <button
                 onClick={() => setDanmakuEnabled(!danmakuEnabled)}
                 className={`px-3 py-1 rounded-lg text-xs transition-colors ${
@@ -300,6 +300,7 @@ export default function VideoGallery() {
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
 

@@ -25,22 +25,24 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findFirst({
-      where: {
-        OR: [{ username: dto.username }, { email: dto.email }],
-      },
-    });
-    if (existing) {
-      throw new ConflictException('Username or email already exists');
-    }
+    const user = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.user.findFirst({
+        where: {
+          OR: [{ username: dto.username }, { email: dto.email }],
+        },
+      });
+      if (existing) {
+        throw new ConflictException('Username or email already exists');
+      }
 
-    const user = await this.prisma.user.create({
-      data: {
-        username: dto.username,
-        email: dto.email,
-        nickname: dto.nickname,
-        passwordHash: this.hashPassword(dto.password),
-      },
+      return tx.user.create({
+        data: {
+          username: dto.username,
+          email: dto.email,
+          nickname: dto.nickname,
+          passwordHash: this.hashPassword(dto.password),
+        },
+      });
     });
 
     return this.generateToken(user);

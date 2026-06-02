@@ -1,7 +1,9 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { randomUUID } from 'crypto';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
@@ -35,10 +37,24 @@ async function bootstrap() {
     throw new Error('DATABASE_URL environment variable is required');
   }
 
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
 
   app.enableShutdownHooks();
+
+  // Request tracing — adds X-Request-Id header and logs method/url/status/duration
+  app.use((req: any, res: any, next: any) => {
+    const requestId = randomUUID().slice(0, 8);
+    req.requestId = requestId;
+    res.setHeader('X-Request-Id', requestId);
+    const start = Date.now();
+    res.on('finish', () => {
+      const duration = Date.now() - start;
+      const level = res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'log';
+      app.get(Logger)[level](`[${requestId}] ${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+    });
+    next();
+  });
 
   app.setGlobalPrefix('api');
 
@@ -47,12 +63,25 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Increase JSON body size limit
+  const { json } = require('body-parser');
+  app.use(json({ limit: '10mb' }));
+  app.use((err: any, _req: any, res: any, next: any) => {
+    if (err.type === 'entity.too.large') {
+      return res.status(413).json({
+        statusCode: 413,
+        message: [`Request body too large. Maximum size is 10MB`],
+        error: 'PAYLOAD_TOO_LARGE',
+      });
+    }
+    next(err);
+  });
+
   app.useGlobalFilters(new HttpExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      forbidNonWhitelisted: true,
       transform: true,
     }),
   );

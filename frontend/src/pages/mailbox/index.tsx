@@ -42,8 +42,8 @@ export default function Mailbox() {
 
   useEffect(() => {
     Promise.all([
-      mailboxApi.findMy().then(({ data }) => setLetters(data.data || data || [])).catch(() => {}),
-      mailboxApi.findOpened().then(({ data }) => setOpenedLetters(data.data || data || [])).catch(() => {}),
+      mailboxApi.findMy().then(({ data }) => setLetters(data.data || data || [])).catch((e) => console.error('load mailbox failed', e)),
+      mailboxApi.findOpened().then(({ data }) => setOpenedLetters(data.data || data || [])).catch((e) => console.error('load mailbox failed', e)),
     ]).finally(() => setLoading(false))
   }, [])
 
@@ -61,7 +61,7 @@ export default function Mailbox() {
       setForm({ title: '', content: '', unlockType: '1Y', unlockDate: '' })
       const { data } = await mailboxApi.findMy()
       setLetters(data.data || data || [])
-    } catch {} finally {
+    } catch (e) { console.error('write letter failed', e) } finally {
       setSubmitting(false)
     }
   }
@@ -77,7 +77,7 @@ export default function Mailbox() {
       ])
       setLetters(my.data.data || my.data || [])
       setOpenedLetters(opened.data.data || opened.data || [])
-    } catch {}
+    } catch (e) { console.error('mailbox action failed', e) }
   }
 
   const activeLetters = tab === 'my' ? letters : openedLetters
