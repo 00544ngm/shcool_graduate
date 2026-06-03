@@ -19,14 +19,15 @@ export class VideoService {
     });
   }
 
-  async findAll(page = 1, limit = 20) {
+  async findAll(page = 1, limit = 20, q?: string) {
     const skip = (page - 1) * limit;
+    const where = q ? { title: { contains: q, mode: 'insensitive' as const } } : {};
     const [items, total] = await Promise.all([
       this.prisma.video.findMany({
-        skip, take: limit, orderBy: { createdAt: 'desc' },
+        where, skip, take: limit, orderBy: { createdAt: 'desc' },
         include: { user: { select: { id: true, nickname: true, avatar: true } } },
       }),
-      this.prisma.video.count(),
+      this.prisma.video.count({ where }),
     ]);
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }

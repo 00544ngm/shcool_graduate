@@ -1,6 +1,11 @@
 import { create } from 'zustand'
 import { authApi, userApi } from '@/services/api'
 
+function clearAuth() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('user')
+}
+
 interface User {
   id: string
   username: string
@@ -46,9 +51,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearAuth()
     set({ user: null, token: null })
+    authApi.logout().catch(() => {})
   },
 
   loadProfile: async () => {

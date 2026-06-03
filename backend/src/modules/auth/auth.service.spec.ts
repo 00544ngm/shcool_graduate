@@ -10,6 +10,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let prisma: any;
   let jwtService: any;
+  let tx: any;
 
   const mockUser = {
     id: 'user-1',
@@ -21,7 +22,14 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    tx = {
+      user: {
+        findFirst: jest.fn(),
+        create: jest.fn(),
+      },
+    };
     prisma = {
+      $transaction: jest.fn().mockImplementation((cb: any) => cb(tx)),
       user: {
         findFirst: jest.fn(),
         findUnique: jest.fn(),
@@ -52,24 +60,24 @@ describe('AuthService', () => {
     };
 
     it('should register a new user and return token', async () => {
-      prisma.user.findFirst.mockResolvedValue(null);
-      prisma.user.create.mockResolvedValue(mockUser);
+      tx.user.findFirst.mockResolvedValue(null);
+      tx.user.create.mockResolvedValue(mockUser);
 
       const result = await service.register(dto);
 
-      expect(prisma.user.findFirst).toHaveBeenCalledWith({
+      expect(tx.user.findFirst).toHaveBeenCalledWith({
         where: { OR: [{ username: dto.username }, { email: dto.email }] },
       });
-      expect(prisma.user.create).toHaveBeenCalled();
+      expect(tx.user.create).toHaveBeenCalled();
       expect(result.accessToken).toBe('mock-token');
       expect(result.user.username).toBe('testuser');
     });
 
     it('should throw ConflictException if username or email exists', async () => {
-      prisma.user.findFirst.mockResolvedValue(mockUser);
+      tx.user.findFirst.mockResolvedValue(mockUser);
 
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
-      expect(prisma.user.create).not.toHaveBeenCalled();
+      expect(tx.user.create).not.toHaveBeenCalled();
     });
   });
 
@@ -78,7 +86,6 @@ describe('AuthService', () => {
 
     it('should login and return token', async () => {
       prisma.user.findUnique.mockResolvedValue(mockUser);
-      // Mock the private verifyPassword - we test password hashing indirectly
       jest.spyOn(service as any, 'verifyPassword').mockReturnValue(true);
 
       const result = await service.login(dto);

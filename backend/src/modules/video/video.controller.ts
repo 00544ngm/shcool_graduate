@@ -26,8 +26,8 @@ export class VideoController {
   }
 
   @Get()
-  findAll(@Query() pagination: PaginationDto) {
-    return this.videoService.findAll(pagination.page!, pagination.limit!);
+  findAll(@Query() pagination: PaginationDto, @Query('q') q?: string) {
+    return this.videoService.findAll(pagination.page!, pagination.limit!, q);
   }
 
   @Get(':id')

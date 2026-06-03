@@ -13,10 +13,12 @@ export class PhotoService {
 
   async create(userId: string, file: Express.Multer.File, dto: CreatePhotoDto) {
     const imageUrl = await this.storage.save(file, 'photos');
+    const thumbnailUrl = await this.storage.saveThumbnail(file, 'photos');
     return this.prisma.photo.create({
       data: {
         userId,
         imageUrl,
+        thumbnailUrl,
         title: dto.title,
         description: dto.description,
         takenAt: dto.takenAt ? new Date(dto.takenAt) : null,
@@ -51,33 +53,23 @@ export class PhotoService {
     return photo;
   }
 
+  private searchWhere(query: string) {
+    return {
+      OR: [
+        { title: { contains: query, mode: 'insensitive' as const } },
+        { description: { contains: query, mode: 'insensitive' as const } },
+        { tags: { has: query } },
+        { location: { contains: query, mode: 'insensitive' as const } },
+      ],
+    };
+  }
+
   async search(query: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
+    const where = this.searchWhere(query);
     const [items, total] = await Promise.all([
-      this.prisma.photo.findMany({
-        where: {
-          OR: [
-            { title: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-            { tags: { has: query } },
-            { location: { contains: query, mode: 'insensitive' } },
-          ],
-        },
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: { user: { select: { id: true, nickname: true, avatar: true } } },
-      }),
-      this.prisma.photo.count({
-        where: {
-          OR: [
-            { title: { contains: query, mode: 'insensitive' } },
-            { description: { contains: query, mode: 'insensitive' } },
-            { tags: { has: query } },
-            { location: { contains: query, mode: 'insensitive' } },
-          ],
-        },
-      }),
+      this.prisma.photo.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { user: { select: { id: true, nickname: true, avatar: true } } } }),
+      this.prisma.photo.count({ where }),
     ]);
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }

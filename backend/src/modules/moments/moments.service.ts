@@ -14,14 +14,15 @@ export class MomentsService {
     });
   }
 
-  async findAll(page = 1, limit = 20) {
+  async findAll(page = 1, limit = 20, q?: string) {
     const skip = (page - 1) * limit;
+    const where = q ? { content: { contains: q, mode: 'insensitive' as const } } : {};
     const [items, total] = await Promise.all([
       this.prisma.moment.findMany({
-        skip, take: limit, orderBy: { createdAt: 'desc' },
+        where, skip, take: limit, orderBy: { createdAt: 'desc' },
         include: { user: { select: { id: true, nickname: true, avatar: true } } },
       }),
-      this.prisma.moment.count(),
+      this.prisma.moment.count({ where }),
     ]);
     return { items, total, page, totalPages: Math.ceil(total / limit) };
   }

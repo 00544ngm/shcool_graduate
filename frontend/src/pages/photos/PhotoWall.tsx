@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Upload, Image as ImageIcon, Heart, MessageCircle, ArrowUpDown, MapPin, Bookmark } from 'lucide-react'
+import { Search, Upload, Image as ImageIcon, Heart, MessageCircle, ArrowUpDown, MapPin, Bookmark, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +11,7 @@ import { photoApi } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { useFavorites } from '@/hooks/useFavorites'
 import { useToastStore } from '@/stores/toast'
+import { useDebounce } from '@/hooks/useDebounce'
 import { PageMeta } from '@/components/PageMeta'
 
 interface Photo {
@@ -20,6 +21,7 @@ interface Photo {
   imageUrl: string
   thumbnailUrl?: string
   takenAt?: string
+  createdAt: string
   location?: string
   tags?: string[]
   user?: { id: string; nickname?: string; username: string; avatar?: string }
@@ -39,6 +41,7 @@ export default function PhotoWall() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
   const [locationFilter, setLocationFilter] = useState<string>('')
   const [tagFilter, setTagFilter] = useState<string>('')
@@ -48,6 +51,7 @@ export default function PhotoWall() {
   const [uploadForm, setUploadForm] = useState({ title: '', description: '', takenAt: '', location: '', tags: '' })
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string>('')
+  const [lightboxIdx, setLightboxIdx] = useState<number>(-1)
   const loaderRef = useRef<HTMLDivElement>(null)
   const fetchIdRef = useRef(0) // prevents stale responses
 
@@ -86,7 +90,7 @@ export default function PhotoWall() {
 
   useEffect(() => {
     setLoading(true)
-    fetchPhotos(1, search || undefined).then((data) => {
+    fetchPhotos(1, debouncedSearch || undefined).then((data) => {
       if (!data) return
       let items = data.items || []
       setPhotos(items)
@@ -94,7 +98,7 @@ export default function PhotoWall() {
       setHasMore(items.length >= 20)
       setLoading(false)
     })
-  }, [fetchPhotos, search])
+  }, [fetchPhotos, debouncedSearch])
 
   useEffect(() => {
     const el = loaderRef.current
@@ -115,7 +119,7 @@ export default function PhotoWall() {
   useEffect(() => {
     if (page <= 1) return
     const id = ++fetchIdRef.current
-    fetchPhotos(page, search || undefined).then((data) => {
+    fetchPhotos(page, debouncedSearch || undefined).then((data) => {
       if (!data) return // stale
       const items = data.items || []
       setPhotos((prev) => [...prev, ...items])
@@ -123,7 +127,7 @@ export default function PhotoWall() {
       setLoadingMore(false)
     })
     return () => { fetchIdRef.current++ } // cancel on unmount/rerun
-  }, [page, fetchPhotos, search])
+  }, [page, fetchPhotos, debouncedSearch])
 
   /* ─── Sort & Filter ─── */
   const displayedPhotos = useMemo(() => {
@@ -321,11 +325,8 @@ export default function PhotoWall() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.03 }}
                   >
-                    <Link
-                      to={`/photos/${photo.id}`}
-                      className="group relative block overflow-hidden rounded-xl border border-border bg-bg-card"
-                    >
-                      <div className="aspect-square">
+                    <div className="group relative overflow-hidden rounded-xl border border-border bg-bg-card">
+                      <div className="aspect-square cursor-pointer" onClick={() => setLightboxIdx(idx)}>
                         <img
                           src={photo.thumbnailUrl || photo.imageUrl}
                           alt={photo.title}
@@ -334,9 +335,11 @@ export default function PhotoWall() {
                         />
                       </div>
                       {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                      <Link to={`/photos/${photo.id}`} className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                       <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 transition-opacity group-hover:opacity-100">
-                        <p className="truncate text-sm font-medium text-white">{photo.title}</p>
+                        <Link to={`/photos/${photo.id}`}>
+                          <p className="truncate text-sm font-medium text-white hover:underline">{photo.title}</p>
+                        </Link>
                         {photo.location && (
                           <p className="mt-0.5 flex items-center gap-1 text-xs text-white/70">
                             <MapPin className="h-3 w-3" />{photo.location}
@@ -347,7 +350,7 @@ export default function PhotoWall() {
                           <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" />{photo._count?.comments ?? 0}</span>
                         </div>
                       </div>
-                    </Link>
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -362,6 +365,46 @@ export default function PhotoWall() {
               )}
             </div>
           </>
+        )}
+
+        {/* Lightbox */}
+        {lightboxIdx >= 0 && displayedPhotos[lightboxIdx] && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={() => setLightboxIdx(-1)}
+          >
+            <button
+              onClick={() => setLightboxIdx(-1)}
+              className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {lightboxIdx > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx - 1) }}
+                className="absolute left-4 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+            )}
+
+            {lightboxIdx < displayedPhotos.length - 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxIdx(lightboxIdx + 1) }}
+                className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            )}
+
+            <img
+              src={displayedPhotos[lightboxIdx].imageUrl}
+              alt={displayedPhotos[lightboxIdx].title || ''}
+              className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         )}
 
         {/* Upload Dialog */}

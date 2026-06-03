@@ -1,9 +1,13 @@
+import helmet from 'helmet';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { randomUUID } from 'crypto';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { Request, Response, NextFunction } from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
@@ -40,12 +44,29 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
   app.useLogger(app.get(Logger));
 
+  // Security headers
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: false, // Disabled to allow Three.js / dynamic styles
+  }));
+
+  app.use(cookieParser());
+  app.use(compression());
+
+  // Cache static assets and public GET responses
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+    }
+    next();
+  });
+
   app.enableShutdownHooks();
 
   // Request tracing — adds X-Request-Id header and logs method/url/status/duration
-  app.use((req: any, res: any, next: any) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     const requestId = randomUUID().slice(0, 8);
-    req.requestId = requestId;
+    (req as any).requestId = requestId;
     res.setHeader('X-Request-Id', requestId);
     const start = Date.now();
     res.on('finish', () => {
@@ -59,14 +80,14 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(','),
     credentials: true,
   });
 
   // Increase JSON body size limit
   const { json } = require('body-parser');
   app.use(json({ limit: '10mb' }));
-  app.use((err: any, _req: any, res: any, next: any) => {
+  app.use((err: { type?: string }, _req: Request, res: Response, next: NextFunction) => {
     if (err.type === 'entity.too.large') {
       return res.status(413).json({
         statusCode: 413,

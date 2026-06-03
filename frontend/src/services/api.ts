@@ -168,6 +168,7 @@ export const authApi = {
     api.post('/auth/register', data),
   login: (data: { username: string; password: string }) =>
     api.post('/auth/login', data),
+  logout: () => api.post('/auth/logout'),
 }
 
 /* ─── Photos ─── */
@@ -261,6 +262,11 @@ export const adminApi = {
   users: () => api.get('/admin/users'),
   deleteUser: (id: string) => api.delete(`/admin/users/${id}`),
   updateRole: (id: string, role: string) => api.patch(`/admin/users/${id}/role`, { role }),
+  resetPassword: (id: string, password: string) => api.patch(`/admin/users/${id}/reset-password`, { password }),
+  photos: (page?: number) => api.get('/admin/photos', { params: { page } }),
+  deletePhoto: (id: string) => api.delete(`/admin/photos/${id}`),
+  videos: (page?: number) => api.get('/admin/videos', { params: { page } }),
+  deleteVideo: (id: string) => api.delete(`/admin/videos/${id}`),
 }
 
 /* ─── Health ─── */

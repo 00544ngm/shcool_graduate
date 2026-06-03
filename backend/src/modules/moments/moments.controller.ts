@@ -16,8 +16,8 @@ export class MomentsController {
   }
 
   @Get()
-  findAll(@Query() pagination: PaginationDto) {
-    return this.momentsService.findAll(pagination.page!, pagination.limit!);
+  findAll(@Query() pagination: PaginationDto, @Query('q') q?: string) {
+    return this.momentsService.findAll(pagination.page!, pagination.limit!, q);
   }
 
   @UseGuards(JwtAuthGuard)

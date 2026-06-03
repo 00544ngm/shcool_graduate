@@ -8,7 +8,13 @@ describe('TimelineService', () => {
 
   beforeEach(async () => {
     prisma = {
-      photo: { findMany: jest.fn() },
+      photo: {
+        findMany: jest.fn(),
+        aggregate: jest.fn().mockResolvedValue({
+          _min: { takenAt: new Date('2022-09-01') },
+          _max: { takenAt: new Date('2026-06-01') },
+        }),
+      },
       video: { findMany: jest.fn() },
       moment: { findMany: jest.fn() },
     };

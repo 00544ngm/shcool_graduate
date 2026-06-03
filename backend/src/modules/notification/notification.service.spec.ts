@@ -1,10 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationService } from './notification.service';
 import { PrismaService } from '../../common/prisma.service';
+import { NotificationGateway } from './notification.gateway';
 
 describe('NotificationService', () => {
   let service: NotificationService;
   let prisma: any;
+
+  const mockGateway = {
+    sendNotification: jest.fn(),
+  };
 
   beforeEach(async () => {
     prisma = {
@@ -13,6 +18,10 @@ describe('NotificationService', () => {
         findMany: jest.fn(),
         count: jest.fn(),
         updateMany: jest.fn(),
+        createManyAndReturn: jest.fn(),
+      },
+      user: {
+        findMany: jest.fn(),
       },
     };
 
@@ -20,6 +29,7 @@ describe('NotificationService', () => {
       providers: [
         NotificationService,
         { provide: PrismaService, useValue: prisma },
+        { provide: NotificationGateway, useValue: mockGateway },
       ],
     }).compile();
 
@@ -34,7 +44,8 @@ describe('NotificationService', () => {
       const result = await service.create('user-1', 'comment', 'Test', 'photo-1');
 
       expect(prisma.notification.create).toHaveBeenCalledWith({
-        data: { userId: 'user-1', type: 'comment', content: 'Test', relatedId: 'photo-1' },
+        data: { userId: 'user-1', type: 'comment', content: 'Test', relatedId: 'photo-1', fromUserId: undefined },
+        include: { fromUser: { select: { id: true, nickname: true, username: true, avatar: true } } },
       });
       expect(result.id).toBe('notif-1');
     });

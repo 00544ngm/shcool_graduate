@@ -30,7 +30,7 @@ import { env } from './config/env';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
-      serveStaticOptions: { index: false },
+      serveStaticOptions: { index: false, maxAge: '1d', immutable: true },
     }),
     ThrottlerModule.forRoot({
       throttlers: [{ name: 'default', limit: 60, ttl: 60000 }],

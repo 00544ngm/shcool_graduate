@@ -4,5 +4,6 @@ allowBuilds:
   '@scarf/scarf': true
   esbuild: true
   prisma: true
+  sharp: true
   unrs-resolver: set this to true or false
 onlyBuiltDependencies: '[unrs-resolver]'

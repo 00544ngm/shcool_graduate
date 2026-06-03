@@ -13,6 +13,7 @@ describe('PhotoService', () => {
     id: 'photo-1',
     userId: 'user-1',
     imageUrl: 'photos/test.jpg',
+    thumbnailUrl: 'photos/uuid-thumb.webp',
     title: 'Test Photo',
     description: 'A test photo',
     location: 'Test Location',
@@ -34,6 +35,7 @@ describe('PhotoService', () => {
     };
     storage = {
       save: jest.fn(),
+      saveThumbnail: jest.fn().mockResolvedValue('photos/uuid-thumb.webp'),
       delete: jest.fn(),
     };
 

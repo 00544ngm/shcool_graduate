@@ -21,6 +21,7 @@ const AIAssistant = lazy(() => import('@/pages/ai'))
 const Notifications = lazy(() => import('@/pages/notifications'))
 const Settings = lazy(() => import('@/pages/settings'))
 const Admin = lazy(() => import('@/pages/admin'))
+const NotFound = lazy(() => import('@/pages/notFound'))
 
 function PageLoader() {
   return (
@@ -60,6 +61,7 @@ export const routes = createRoutesFromElements(
       <Route path="/ai" element={<Lazy><AIAssistant /></Lazy>} />
       <Route path="/notifications" element={<Lazy><Notifications /></Lazy>} />
       <Route path="/admin" element={<Lazy><Admin /></Lazy>} />
+      <Route path="*" element={<Lazy><NotFound /></Lazy>} />
     </Route>
   </Route>,
 )

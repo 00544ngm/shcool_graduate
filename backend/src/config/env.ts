@@ -15,4 +15,7 @@ export const env = () => ({
     type: process.env.STORAGE_TYPE || 'local',
     path: process.env.STORAGE_PATH || './uploads',
   },
+  cors: {
+    origins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:3000').split(','),
+  },
 });
