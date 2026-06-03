@@ -6,7 +6,6 @@ dist/
 .vscode/
 .idea/
 *.tsbuildinfo
-pnpm-lock.yaml
 .DS_Store
 Thumbs.db
 
