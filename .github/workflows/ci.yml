@@ -37,11 +37,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'pnpm'
-          cache-dependency-path: backend/pnpm-lock.yaml
+          node-version: '22'
 
       - run: pnpm install --frozen-lockfile
+        working-directory: backend
 
       - run: npx prisma generate
         env:
@@ -73,9 +72,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'pnpm'
-          cache-dependency-path: frontend/pnpm-lock.yaml
+          node-version: '22'
 
       - run: pnpm install --frozen-lockfile
 
